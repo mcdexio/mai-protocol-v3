@@ -20,7 +20,6 @@ library AMMModule {
     using SafeMathExt for int256;
     using SignedSafeMathUpgradeable for int256;
     using SafeCastUpgradeable for uint256;
-
     using MarginAccountModule for PerpetualStorage;
     using PerpetualModule for PerpetualStorage;
 

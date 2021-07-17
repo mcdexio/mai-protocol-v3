@@ -54,12 +54,14 @@ describe('TradeModule2', () => {
             const OrderModule = await createContract("OrderModule");
             const PerpetualModule = await createContract("PerpetualModule");
             const LiquidityPoolModule = await createContract("LiquidityPoolModule", [], { CollateralModule, AMMModule, PerpetualModule });
-            const TradeModule = await createContract("TradeModule", [], { AMMModule, LiquidityPoolModule });
+            const LiquidityPoolModule2 = await createContract("LiquidityPoolModule2", [], { CollateralModule, PerpetualModule, LiquidityPoolModule });
+            const TradeModule = await createContract("TradeModule", [], { AMMModule, LiquidityPoolModule, LiquidityPoolModule2 });
             testOrder = await createContract("TestOrder", [], { OrderModule });
             testTrade = await createContract("TestTrade", [], {
                 CollateralModule,
                 PerpetualModule,
                 LiquidityPoolModule,
+                LiquidityPoolModule2,
                 OrderModule,
                 TradeModule,
             });

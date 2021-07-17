@@ -23,9 +23,11 @@ interface ILiquidityPool {
     ) external;
 
     /**
-     * @notice  Set the liquidity pool to running state. Can be call only once by operater.m n
+     * @dev     Upgrade LiquidityPool. Call this function after initialize()
+     *
+     * @param   nextAddresses          Implementations except the 1st one of ChainedProxy
      */
-    function runLiquidityPool() external;
+    function upgradeChainedProxy(address[] memory nextAddresses) external;
 
     /**
      * @notice  If you want to get the real-time data, call this function first

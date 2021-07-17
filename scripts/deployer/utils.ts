@@ -4,8 +4,8 @@ export function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function ensureFinished(transation): Promise<any> {
-    const result = await transation;
+export async function ensureFinished(transaction): Promise<any> {
+    const result = await transaction;
     if (typeof result.deployTransaction != 'undefined') {
         await result.deployTransaction.wait()
     } else {

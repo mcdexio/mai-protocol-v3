@@ -237,7 +237,7 @@ describe('Minging', () => {
         await stk.mint(user1.address, toWei("100"));
         await stk.mint(user2.address, toWei("25"));
 
-        const tx = await miner.connect(user1).notifyRewardAmount(toWei("40"));
+        const tx = await (await miner.connect(user1).notifyRewardAmount(toWei("40"))).wait();
         // period = 13
         expect(await miner.periodFinish()).to.equal(tx.blockNumber + 13)
 

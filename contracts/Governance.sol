@@ -14,6 +14,7 @@ contract Governance is Storage, ILiquidityPoolGovernance {
     using PerpetualModule for PerpetualStorage;
     using MarginAccountModule for PerpetualStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
 
     modifier onlyGovernor() {
         require(_msgSender() == _liquidityPool.governor, "only governor is allowed");

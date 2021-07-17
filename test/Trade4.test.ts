@@ -7,6 +7,7 @@ import {
     toBytes32,
     getAccounts,
     createContract,
+    deployPoolCreator,
 } from '../scripts/utils';
 
 import "./helper";
@@ -52,13 +53,15 @@ describe('TradeModule4 - auto deposit/withdraw with targetLeverage', () => {
             const PerpetualModule = await createContract("PerpetualModule");
             const OrderModule = await createContract("OrderModule");
             const LiquidityPoolModule = await createContract("LiquidityPoolModule", [], { CollateralModule, AMMModule, PerpetualModule });
+            const LiquidityPoolModule2 = await createContract("LiquidityPoolModule2", [], { CollateralModule, PerpetualModule, LiquidityPoolModule });
 
             const MockAMMModule = await createContract("MockAMMModule");
-            const TradeModule = await createContract("TradeModule", [], { AMMModule: MockAMMModule, LiquidityPoolModule });
+            const TradeModule = await createContract("TradeModule", [], { AMMModule: MockAMMModule, LiquidityPoolModule, LiquidityPoolModule2 });
             testTrade = await createContract("TestTrade", [], {
                 PerpetualModule,
                 CollateralModule,
                 LiquidityPoolModule,
+                LiquidityPoolModule2,
                 OrderModule,
                 TradeModule,
             });

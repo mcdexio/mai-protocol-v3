@@ -13,6 +13,7 @@ import "./libraries/OrderData.sol";
 import "./module/TradeModule.sol";
 import "./module/OrderModule.sol";
 import "./module/LiquidityPoolModule.sol";
+import "./module/LiquidityPoolModule2.sol";
 
 import "./Storage.sol";
 import "./Type.sol";
@@ -23,6 +24,7 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
     using OrderModule for LiquidityPoolStorage;
     using TradeModule for LiquidityPoolStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
     function setTargetLeverage(

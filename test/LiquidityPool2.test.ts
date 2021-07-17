@@ -47,8 +47,14 @@ describe('LiquidityPool2', () => {
             CollateralModule,
             PerpetualModule
         });
+        const LiquidityPoolModule2 = await createContract("LiquidityPoolModule2", [], {
+            CollateralModule,
+            PerpetualModule,
+            LiquidityPoolModule
+        });
         liquidityPool = await createContract("TestLiquidityPool", [], {
             LiquidityPoolModule,
+            LiquidityPoolModule2,
             CollateralModule,
             PerpetualModule
         });

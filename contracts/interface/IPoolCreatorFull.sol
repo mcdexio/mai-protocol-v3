@@ -10,8 +10,8 @@ import "./IKeeperWhitelist.sol";
 
 interface IPoolCreatorFull is
     IPoolCreator,
-    IVersionControl,
     ITracer,
+    IVersionControl,
     IVariables,
     IAccessControl,
     IKeeperWhitelist

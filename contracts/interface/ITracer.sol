@@ -33,4 +33,12 @@ interface ITracer {
      * @param   operator        The address of the new operator, must be different from the old operator.
      */
     function registerOperatorOfLiquidityPool(address liquidityPool, address operator) external;
+
+    /**
+     * @notice  Check if the liquidity pool exists.
+     *
+     * @param   liquidityPool   The address of the liquidity pool.
+     * @return  True if the liquidity pool exists.
+     */
+    function isLiquidityPool(address liquidityPool) external view returns (bool);
 }

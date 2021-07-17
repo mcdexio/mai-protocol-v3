@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { expect, use } from "chai";
-import { toWei, fromWei, toBytes32, getAccounts, createContract, createLiquidityPoolFactory, createFactory } from "../scripts/utils";
+import { toWei, fromWei, toBytes32, getAccounts, createContract, createLiquidityPoolFactory, createFactory, deployPoolCreator } from "../scripts/utils";
 const { ethers } = require("hardhat");
 
 describe("Creator", () => {
@@ -26,8 +26,8 @@ describe("Creator", () => {
     vault = accounts[9];
   });
 
-  const versionKey = (lp, gov) => {
-    return ethers.utils.solidityKeccak256(["address", "address"], [lp, gov]);
+  const versionKey = (lp0, lp1, gov) => {
+    return ethers.utils.solidityKeccak256(["address[]", "address"], [[lp0, lp1], gov]);
   };
 
   beforeEach(async () => {
@@ -36,10 +36,7 @@ describe("Creator", () => {
     var symbol = await createContract("SymbolService");
     await symbol.initialize(10000);
     ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-    var perpTemplate = await LiquidityPoolFactory.deploy();
-    var govTemplate = await createContract("TestLpGovernor");
-    poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
+    poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
     await symbol.addWhitelistedFactory(poolCreator.address);
     // await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
   });
@@ -47,42 +44,49 @@ describe("Creator", () => {
   it("versionControl", async () => {
     await expect(poolCreator.getLatestVersion()).to.be.revertedWith("no version");
     await expect(
-      poolCreator.addVersion("0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", 0, "version0")
+      poolCreator.addVersion(["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"], "0x0000000000000000000000000000000000000000", 0, "version0")
     ).to.be.revertedWith("implementation must be contract");
 
-    var lpVersion1 = await LiquidityPoolFactory.deploy();
+    var lp0Version1 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version1 = await LiquidityPoolFactory[1].deploy();
     var govVersion1 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion1.address, govVersion1.address, 1, "version1");
-    const key1 = versionKey(lpVersion1.address, govVersion1.address);
+    await poolCreator.addVersion([lp0Version1.address, lp1Version1.address], govVersion1.address, 1, "version1");
+    const key1 = versionKey(lp0Version1.address, lp1Version1.address, govVersion1.address);
     expect(await poolCreator.getLatestVersion()).to.equal(key1);
 
-    await expect(poolCreator.addVersion(lpVersion1.address, govVersion1.address, 0, "version1")).to.be.revertedWith("implementation already exists");
-    await expect(poolCreator.addVersion(user0.address, govVersion1.address, 1, "version1")).to.be.revertedWith("implementation must be contract");
+    await expect(poolCreator.addVersion([lp0Version1.address, lp1Version1.address], govVersion1.address, 0, "version1")).to.be.revertedWith("implementation already exists");
+    // all addresses are contract in ovm
+    // await expect(poolCreator.addVersion([user0.address, user1.address], govVersion1.address, 1, "version1")).to.be.revertedWith("implementation must be contract");
 
-    var lpVersion2 = await LiquidityPoolFactory.deploy();
+    var lp0Version2 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version2 = await LiquidityPoolFactory[1].deploy();
     var govVersion2 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion2.address, govVersion2.address, 2, "version2");
-    const key2 = versionKey(lpVersion2.address, govVersion2.address);
+    await poolCreator.addVersion([lp0Version2.address, lp1Version2.address], govVersion2.address, 2, "version2");
+    const key2 = versionKey(lp0Version2.address, lp1Version2.address, govVersion2.address);
     expect(await poolCreator.getLatestVersion()).to.equal(key2);
 
-    var lpVersion3 = await LiquidityPoolFactory.deploy();
+    var lp0Version3 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version3 = await LiquidityPoolFactory[1].deploy();
     var govVersion3 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion3.address, govVersion3.address, 2, "version3");
-    const key3 = versionKey(lpVersion3.address, govVersion3.address);
+    await poolCreator.addVersion([lp0Version3.address, lp1Version3.address], govVersion3.address, 2, "version3");
+    const key3 = versionKey(lp0Version3.address, lp1Version3.address, govVersion3.address);
     expect(await poolCreator.getLatestVersion()).to.equal(key3);
 
     var result = await poolCreator.getVersion(key1);
-    expect(result.liquidityPoolTemplate).to.equal(lpVersion1.address);
+    expect(result.liquidityPoolTemplate[0]).to.equal(lp0Version1.address);
+    expect(result.liquidityPoolTemplate[1]).to.equal(lp1Version1.address);
     expect(result.governorTemplate).to.equal(govVersion1.address);
     expect(result.compatibility).to.equal(1);
 
     var result = await poolCreator.getVersion(key2);
-    expect(result.liquidityPoolTemplate).to.equal(lpVersion2.address);
+    expect(result.liquidityPoolTemplate[0]).to.equal(lp0Version2.address);
+    expect(result.liquidityPoolTemplate[1]).to.equal(lp1Version2.address);
     expect(result.governorTemplate).to.equal(govVersion2.address);
     expect(result.compatibility).to.equal(2);
 
     var result = await poolCreator.getVersion(key3);
-    expect(result.liquidityPoolTemplate).to.equal(lpVersion3.address);
+    expect(result.liquidityPoolTemplate[0]).to.equal(lp0Version3.address);
+    expect(result.liquidityPoolTemplate[1]).to.equal(lp1Version3.address);
     expect(result.governorTemplate).to.equal(govVersion3.address);
     expect(result.compatibility).to.equal(2);
 
@@ -99,10 +103,10 @@ describe("Creator", () => {
   });
 
   it("tracer", async () => {
-    var lpVersion1 = await LiquidityPoolFactory.deploy();
+    var lp0Version1 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version1 = await LiquidityPoolFactory[1].deploy();
     var govVersion1 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion1.address, govVersion1.address, 1, "version1");
-    const key1 = versionKey(lpVersion1.address, govVersion1.address);
+    await poolCreator.addVersion([lp0Version1.address, lp1Version1.address], govVersion1.address, 1, "version1");
 
     oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
 
@@ -157,10 +161,10 @@ describe("Creator", () => {
   });
 
   it("tracer - 2", async () => {
-    var lpVersion1 = await LiquidityPoolFactory.deploy();
+    var lp0Version1 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version1 = await LiquidityPoolFactory[1].deploy();
     var govVersion1 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion1.address, govVersion1.address, 1, "version1");
-    const key1 = versionKey(lpVersion1.address, govVersion1.address);
+    await poolCreator.addVersion([lp0Version1.address, lp1Version1.address], govVersion1.address, 1, "version1");
 
     oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
     await oracle.setIndexPrice(toWei("1000"), 1000);
@@ -174,7 +178,7 @@ describe("Creator", () => {
     );
     await poolCreator.createLiquidityPool(ctk.address, 18, 996, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
 
-    const liquidityPool1 = await LiquidityPoolFactory.attach(deployed1[0]);
+    const liquidityPool1 = await ethers.getContractAt("LiquidityPoolAllHops", deployed1[0]);
     await liquidityPool1.createPerpetual(
       oracle.address,
       [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
@@ -199,7 +203,7 @@ describe("Creator", () => {
     );
     await poolCreator.createLiquidityPool(ctk.address, 18, 997, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
 
-    const liquidityPool2 = await LiquidityPoolFactory.attach(deployed2[0]);
+    const liquidityPool2 = await ethers.getContractAt("LiquidityPoolAllHops", deployed2[0]);
     await liquidityPool2.createPerpetual(
       oracle.address,
       [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
@@ -246,16 +250,18 @@ describe("Creator", () => {
   });
 
   it("owner", async () => {
-    var lpVersion1 = await LiquidityPoolFactory.deploy();
+    var lp0Version1 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version1 = await LiquidityPoolFactory[1].deploy();
     var govVersion1 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion1.address, govVersion1.address, 1, "version1");
-    const key1 = versionKey(lpVersion1.address, govVersion1.address);
+    await poolCreator.addVersion([lp0Version1.address, lp1Version1.address], govVersion1.address, 1, "version1");
+    const key1 = versionKey(lp0Version1.address, lp1Version1.address, govVersion1.address);
     expect(await poolCreator.getLatestVersion()).to.equal(key1);
-    var lpVersion2 = await LiquidityPoolFactory.deploy();
+    var lp0Version2 = await LiquidityPoolFactory[0].deploy();
+    var lp1Version2 = await LiquidityPoolFactory[1].deploy();
     var govVersion2 = await createContract("TestLpGovernor");
-    await poolCreator.addVersion(lpVersion2.address, govVersion2.address, 2, "version2");
+    await poolCreator.addVersion([lp0Version2.address, lp1Version2.address], govVersion2.address, 2, "version2");
     await poolCreator.setVault(user3.address);
-    await expect(poolCreator.connect(user2).addVersion(lpVersion2.address, govVersion2.address, 2, "version2")).to.be.revertedWith(
+    await expect(poolCreator.connect(user2).addVersion([lp0Version2.address, lp1Version2.address], govVersion2.address, 2, "version2")).to.be.revertedWith(
       "caller is not the owner"
     );
     await expect(poolCreator.connect(user2).setVault(user1.address)).to.be.revertedWith("caller is not the owner");

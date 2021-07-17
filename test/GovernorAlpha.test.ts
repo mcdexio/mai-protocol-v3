@@ -7,7 +7,8 @@ import {
     getAccounts,
     createContract,
     createLiquidityPoolFactory,
-    createFactory
+    createFactory,
+    deployPoolCreator
 } from '../scripts/utils';
 
 describe('GovernorAlpha', () => {
@@ -255,8 +256,8 @@ describe('GovernorAlpha', () => {
 
     it("quorum critical - upgrade", async () => {
 
-        const versionKey = (lp, gov) => {
-            return ethers.utils.solidityKeccak256(["address", "address"], [lp, gov]);
+        const versionKey = (lp1, lp2, gov) => {
+            return ethers.utils.solidityKeccak256(["address[]", "address"], [[lp1, lp2], gov]);
         }
 
         const LiquidityPoolFactory = await createLiquidityPoolFactory();
@@ -264,25 +265,19 @@ describe('GovernorAlpha', () => {
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         const ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
-        var govTemplate = await createContract("TestLpGovernor");
-        const poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            user0.address,
-            toWei("0.001"),
-        )
+        var vault = user0;
+        var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
         await symbol.addWhitelistedFactory(poolCreator.address);
 
-        var lpVersion1 = await LiquidityPoolFactory.deploy();
+        var lp0Version1 = await LiquidityPoolFactory[0].deploy();
+        var lp1Version1 = await LiquidityPoolFactory[1].deploy();
         var govVersion1 = await createContract("TestLpGovernor");
         await poolCreator.addVersion(
-            lpVersion1.address,
+            [lp0Version1.address, lp1Version1.address],
             govVersion1.address,
             1,
             "version1"
         );
-        const key1 = versionKey(lpVersion1.address, govVersion1.address);
 
         const deployed1 = await poolCreator.connect(user1).callStatic.createLiquidityPool(ctk.address, 18, 996, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
         await poolCreator.connect(user1).createLiquidityPool(ctk.address, 18, 996, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
@@ -290,7 +285,7 @@ describe('GovernorAlpha', () => {
         const oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
         await oracle.setIndexPrice(toWei("1000"), 1000)
         await oracle.setMarkPrice(toWei("1000"), 1000)
-        const liquidityPool1 = await LiquidityPoolFactory.attach(deployed1[0]);
+        const liquidityPool1 = await ethers.getContractAt("LiquidityPoolAllHops", deployed1[0]);
         const governor1 = await ethers.getContractAt("TestLpGovernor", deployed1[1]);
 
         await liquidityPool1.createPerpetual(
@@ -302,15 +297,16 @@ describe('GovernorAlpha', () => {
         )
         await liquidityPool1.runLiquidityPool();
 
-        var lpVersion2 = await LiquidityPoolFactory.deploy();
+        var lp0Version2 = await LiquidityPoolFactory[0].deploy();
+        var lp1Version2 = await LiquidityPoolFactory[1].deploy();
         var govVersion2 = await createContract("TestLpGovernor");
         await poolCreator.addVersion(
-            lpVersion2.address,
+            [lp0Version2.address, lp1Version2.address],
             govVersion2.address,
             2,
             "version2"
         );
-        const key2 = versionKey(lpVersion2.address, govVersion2.address);
+        const key2 = versionKey(lp0Version2.address, lp1Version2.address, govVersion2.address);
 
         await ctk.mint(user0.address, toWei("1000"));
         await ctk.connect(user0).approve(liquidityPool1.address, toWei("1000"));
@@ -361,7 +357,7 @@ describe('GovernorAlpha', () => {
             "setFastCreationEnabled to true"
         );
 
-        let tx2 = await governor.connect(user1).propose(
+        await governor.connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
@@ -399,7 +395,7 @@ describe('GovernorAlpha', () => {
             "setFastCreationEnabled to true"
         );
 
-        let tx2 = await governor.connect(user1).propose(
+        await governor.connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
@@ -437,11 +433,11 @@ describe('GovernorAlpha', () => {
             "setFastCreationEnabled to true"
         );
 
-        let tx2 = await governor.connect(user1).propose(
+        let tx2 = await (await governor.connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
 
         const startBlock = tx2.blockNumber;
         console.log("start @", startBlock)
@@ -478,11 +474,11 @@ describe('GovernorAlpha', () => {
             "setFastCreationEnabled to true"
         );
 
-        let tx2 = await governor.connect(user1).propose(
+        let tx2 = await (await governor.connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
 
         // PENDING
         const startBlock = tx2.blockNumber;
@@ -529,20 +525,20 @@ describe('GovernorAlpha', () => {
         await stk.mint(user2.address, toWei("1000"));
         await stk.mint(user3.address, toWei("500"));
 
-        let tx1 = await governor.connect(user1).connect(user1).propose(
+        let tx1 = await (await governor.connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t1Start = tx1.blockNumber;
 
         await skipBlock(2)
 
-        let tx2 = await governor.connect(user2).propose(
+        let tx2 = await (await governor.connect(user2).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t2Start = tx2.blockNumber;
 
         expect(await governor.state(1)).to.equal(1)
@@ -578,37 +574,37 @@ describe('GovernorAlpha', () => {
         await stk.mint(user4.address, toWei("1000"));
         await stk.mint(user5.address, toWei("1000"));
 
-        let tx1 = await governor.connect(user1).connect(user1).propose(
+        let tx1 = await (await governor.connect(user1).connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t1Start = tx1.blockNumber;
 
         await skipBlock(2)
-        let tx2 = await governor.connect(user2).propose(
+        let tx2 = await (await governor.connect(user2).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t2Start = tx2.blockNumber;
         // +3
 
         await skipBlock(2)
-        let tx3 = await governor.connect(user3).propose(
+        let tx3 = await (await governor.connect(user3).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t3Start = tx3.blockNumber;
         // +3
 
         await skipBlock(2)
-        let tx4 = await governor.connect(user4).propose(
+        let tx4 = await (await governor.connect(user4).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t4Start = tx4.blockNumber;
         // +3
 
@@ -681,37 +677,34 @@ describe('GovernorAlpha', () => {
         await stk.mint(user4.address, toWei("1000"));
         await stk.mint(user5.address, toWei("1000"));
 
-        let tx1 = await governor.connect(user1).connect(user1).propose(
+        await governor.connect(user1).connect(user1).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
         );
-        const t1Start = tx1.blockNumber;
 
         await skipBlock(2)
-        let tx2 = await governor.connect(user2).propose(
+        await governor.connect(user2).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
         );
-        const t2Start = tx2.blockNumber;
         // +3
 
         await skipBlock(2)
-        let tx3 = await governor.connect(user3).propose(
+        await governor.connect(user3).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
         );
-        const t3Start = tx3.blockNumber;
         // +3
 
         await skipBlock(2)
-        let tx4 = await governor.connect(user4).propose(
+        let tx4 = await (await governor.connect(user4).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
             "setFastCreationEnabled to true"
-        );
+        )).wait();
         const t4Start = tx4.blockNumber;
         // +3
 
@@ -739,34 +732,23 @@ describe('GovernorAlpha', () => {
 
     it("create perpetual", async () => {
 
-        const versionKey = (lp, gov) => {
-            return ethers.utils.solidityKeccak256(["address", "address"], [lp, gov]);
-        }
-
         const LiquidityPoolFactory = await createLiquidityPoolFactory();
 
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         const ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
-        var govTemplate = await createContract("TestLpGovernor");
-        const poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            user0.address,
-            toWei("0.001"),
-        )
+        var poolCreator = await deployPoolCreator(symbol, user0, toWei("0.001"));
         await symbol.addWhitelistedFactory(poolCreator.address);
 
-        var lpVersion1 = await LiquidityPoolFactory.deploy();
+        var lp0Version = await LiquidityPoolFactory[0].deploy();
+        var lp1Version = await LiquidityPoolFactory[1].deploy();
         var govVersion1 = await createContract("TestLpGovernor");
         await poolCreator.addVersion(
-            lpVersion1.address,
+            [lp0Version.address, lp1Version.address],
             govVersion1.address,
             1,
             "version1"
         );
-        const key1 = versionKey(lpVersion1.address, govVersion1.address);
 
         const deployed1 = await poolCreator.connect(user1).callStatic.createLiquidityPool(ctk.address, 18, 996, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
         await poolCreator.connect(user1).createLiquidityPool(ctk.address, 18, 996, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
@@ -774,7 +756,7 @@ describe('GovernorAlpha', () => {
         const oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
         await oracle.setIndexPrice(toWei("1000"), 1000)
         await oracle.setMarkPrice(toWei("1000"), 1000)
-        const liquidityPool1 = await LiquidityPoolFactory.attach(deployed1[0]);
+        const liquidityPool1 = await ethers.getContractAt("LiquidityPoolAllHops", deployed1[0]);
         const governor1 = await ethers.getContractAt("TestLpGovernor", deployed1[1]);
 
         const tx = await liquidityPool1.createPerpetual(

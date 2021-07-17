@@ -6,9 +6,11 @@ import "@openzeppelin/contracts-upgradeable/utils/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
 import "./interface/ILiquidityPool.sol";
+import "./libraries/ChainedProxy.sol";
 
 import "./module/AMMModule.sol";
 import "./module/LiquidityPoolModule.sol";
+import "./module/LiquidityPoolModule2.sol";
 import "./module/PerpetualModule.sol";
 
 import "./Getter.sol";
@@ -18,14 +20,20 @@ import "./Perpetual.sol";
 import "./Storage.sol";
 import "./Type.sol";
 
-contract LiquidityPool is Storage, Perpetual, Getter, Governance, LibraryEvents, ILiquidityPool {
+/**
+ * @dev LiquidityPool provides liquidity for multiple perpetuals using the same collateral.
+ *
+ * LiquidityPool uses ChainedProxy. This is the hop0. Check more functions in LiquidityPoolHop1
+ */
+contract LiquidityPool is Storage, Perpetual, Proxy, LibraryEvents, ILiquidityPool {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
     using SafeCastUpgradeable for uint256;
     using PerpetualModule for PerpetualStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
     using AMMModule for LiquidityPoolStorage;
 
-    receive() external payable {
+    receive() external payable override {
         revert("contract does not accept ether");
     }
 
@@ -92,14 +100,6 @@ contract LiquidityPool is Storage, Perpetual, Getter, Governance, LibraryEvents,
     }
 
     /**
-     * @notice  Set the liquidity pool to running state. Can be call only once by operater.m n
-     */
-    function runLiquidityPool() external override onlyOperator {
-        require(!_liquidityPool.isRunning, "already running");
-        _liquidityPool.runLiquidityPool();
-    }
-
-    /**
      * @notice  If you want to get the real-time data, call this function first
      */
     function forceToSyncState() public override syncState(false) {}
@@ -150,27 +150,23 @@ contract LiquidityPool is Storage, Perpetual, Getter, Governance, LibraryEvents,
     }
 
     /**
-     * @notice  Donate collateral to the insurance fund of the pool.
-     *          Can only called when the pool is running.
-     *          Donated collateral is not withdrawable but can be used to improve security.
-     *          Unexpected loss (bankrupt) will be deducted from insurance fund then donated insurance fund.
-     *          Until donated insurance fund is drained, the perpetual will not enter emergency state and shutdown.
+     * @dev     Upgrade LiquidityPool. Call this function after initialize()
      *
-     * @param   amount          The amount of collateral to donate. The amount always use decimals 18.
+     * @param   nextAddresses          Implementations except the 1st one of ChainedProxy
      */
-    function donateInsuranceFund(int256 amount) external nonReentrant {
-        require(_liquidityPool.isRunning, "pool is not running");
-        _liquidityPool.donateInsuranceFund(_msgSender(), amount);
+    function upgradeChainedProxy(address[] memory nextAddresses) public override {
+        require(
+            _liquidityPool.creator != address(0) && _liquidityPool.creator == _msgSender(),
+            "only PoolCreator"
+        );
+        ChainedProxy.replace(nextAddresses);
     }
 
     /**
-     * @notice  Add liquidity to the liquidity pool without getting shares.
-     *
-     * @param   cashToAdd   The amount of cash to add. The amount always use decimals 18.
+     * @dev     Forward unrecognized functions to the next hop
      */
-    function donateLiquidity(int256 cashToAdd) external nonReentrant {
-        require(_liquidityPool.isRunning, "pool is not running");
-        _liquidityPool.donateLiquidity(_msgSender(), cashToAdd);
+    function _implementation() internal view virtual override returns (address) {
+        return ChainedProxy.next(0);
     }
 
     bytes32[50] private __gap;

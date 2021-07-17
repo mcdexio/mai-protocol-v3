@@ -5,13 +5,14 @@ import {
     toWei,
     createContract,
     createLiquidityPoolFactory,
-    createFactory
+    createFactory,
+    deployPoolCreator
 } from "../scripts/utils";
 
 describe("upgrade", () => {
 
     const versionKey = (lp, gov) => {
-        return ethers.utils.solidityKeccak256(["address", "address"], [lp, gov]);
+        return ethers.utils.solidityKeccak256(["address[]", "address"], [lp, gov]);
     }
 
 
@@ -26,15 +27,11 @@ describe("upgrade", () => {
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         var ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
+        var perp0Template = await LiquidityPoolFactory[0].deploy();
+        var perp1Template = await LiquidityPoolFactory[1].deploy();
         var govTemplate = await createContract("TestLpGovernor");
-        var poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            vault.address,
-            toWei("0.001"),
-        )
-        await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
+        var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+        await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
         await symbol.addWhitelistedFactory(poolCreator.address);
 
         const deployed = await poolCreator.callStatic.createLiquidityPool(
@@ -49,7 +46,7 @@ describe("upgrade", () => {
             998,
             ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]),
         );
-        const liquidityPool = await LiquidityPoolFactory.attach(deployed[0]);
+        const liquidityPool = await ethers.getContractAt("LiquidityPoolAllHops", deployed[0]);
         const governor = await ethers.getContractAt("TestLpGovernor", deployed[1]);
 
         // oracle
@@ -85,10 +82,12 @@ describe("upgrade", () => {
 
         expect(await governor.balanceOf(user0.address)).to.equal(toWei("10000"))
 
-        var perpTemplate2 = await (await createLiquidityPoolFactory("TestLiquidityPoolUpgraded")).deploy();
-        var govTemplate2 = await createContract("TestLpGovernorUpgraded");
-        await poolCreator.addVersion(perpTemplate2.address, govTemplate2.address, 1, "v2");
-        var key2 = versionKey(perpTemplate2.address, govTemplate2.address);
+        const TestLiquidityPoolUpgraded = await createLiquidityPoolFactory('TestLiquidityPoolUpgraded');
+        var perp0Template2 = await TestLiquidityPoolUpgraded[0].deploy();
+        var perp1Template2 = await TestLiquidityPoolUpgraded[1].deploy();
+        var govTemplate2 = await createContract('TestLpGovernorUpgraded');
+        await poolCreator.addVersion([perp0Template2.address, perp1Template2.address], govTemplate2.address, 1, "v2");
+        var key2 = versionKey([perp0Template2.address, perp1Template2.address], govTemplate2.address);
 
         await governor.connect(user0).proposeToUpgradeAndCall(key2, "0x", "0x", "upgradetov2");
 
@@ -100,12 +99,12 @@ describe("upgrade", () => {
         await skipBlock(41);
         const upgradeAdmin = await ethers.getContractAt("IProxyAdmin", await poolCreator.upgradeAdmin());
 
-        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perpTemplate.address);
+        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perp0Template.address);
         expect(await upgradeAdmin.getProxyImplementation(governor.address)).to.equal(govTemplate.address);
 
         await governor.execute(1);
 
-        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perpTemplate2.address);
+        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perp0Template2.address);
         expect(await upgradeAdmin.getProxyImplementation(governor.address)).to.equal(govTemplate2.address);
     })
 
@@ -121,15 +120,11 @@ describe("upgrade", () => {
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         var ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
+        var perp0Template = await LiquidityPoolFactory[0].deploy();
+        var perp1Template = await LiquidityPoolFactory[1].deploy();
         var govTemplate = await createContract("TestLpGovernor");
-        var poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            vault.address,
-            toWei("0.001"),
-        )
-        await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
+        var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+        await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
         await symbol.addWhitelistedFactory(poolCreator.address);
 
         const deployed = await poolCreator.callStatic.createLiquidityPool(
@@ -144,7 +139,7 @@ describe("upgrade", () => {
             998,
             ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]),
         );
-        const liquidityPool = await LiquidityPoolFactory.attach(deployed[0]);
+        const liquidityPool = await ethers.getContractAt("LiquidityPoolAllHops", deployed[0]);
         const governor = await ethers.getContractAt("TestLpGovernor", deployed[1]);
 
         // oracle
@@ -180,12 +175,12 @@ describe("upgrade", () => {
 
         expect(await governor.balanceOf(user0.address)).to.equal(toWei("10000"))
 
-
-        const TestLiquidityPoolUpgraded = await createLiquidityPoolFactory("TestLiquidityPoolUpgraded");
-        var perpTemplate2 = await TestLiquidityPoolUpgraded.deploy();
-        var govTemplate2 = await createContract("TestLpGovernorUpgraded");
-        await poolCreator.addVersion(perpTemplate2.address, govTemplate2.address, 1, "v2");
-        var key2 = versionKey(perpTemplate2.address, govTemplate2.address);
+        const TestLiquidityPoolUpgraded = await createLiquidityPoolFactory('TestLiquidityPoolUpgraded');
+        var perp0Template2 = await TestLiquidityPoolUpgraded[0].deploy();
+        var perp1Template2 = await TestLiquidityPoolUpgraded[1].deploy();
+        var govTemplate2 = await createContract('TestLpGovernorUpgraded');
+        await poolCreator.addVersion([perp0Template2.address, perp1Template2.address], govTemplate2.address, 1, "v2");
+        var key2 = versionKey([perp0Template2.address, perp1Template2.address], govTemplate2.address);
 
         await governor.connect(user0).proposeToUpgradeAndCall(
             key2,
@@ -202,15 +197,15 @@ describe("upgrade", () => {
         await skipBlock(41);
         const upgradeAdmin = await ethers.getContractAt("IProxyAdmin", await poolCreator.upgradeAdmin());
 
-        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perpTemplate.address);
+        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perp0Template.address);
         expect(await upgradeAdmin.getProxyImplementation(governor.address)).to.equal(govTemplate.address);
 
         await governor.execute(1);
 
-        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perpTemplate2.address);
+        expect(await upgradeAdmin.getProxyImplementation(liquidityPool.address)).to.equal(perp0Template2.address);
         expect(await upgradeAdmin.getProxyImplementation(governor.address)).to.equal(govTemplate2.address);
 
-        const newLiquidityPool = await TestLiquidityPoolUpgraded.attach(liquidityPool.address);
+        const newLiquidityPool = await TestLiquidityPoolUpgraded[0].attach(liquidityPool.address);
         const newGovernor = await ethers.getContractAt("TestLpGovernorUpgraded", governor.address);
 
         expect(await newLiquidityPool.testValue()).to.equal(998)

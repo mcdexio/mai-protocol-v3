@@ -6,6 +6,7 @@ import "../module/AMMModule.sol";
 import "../module/CollateralModule.sol";
 import "../module/PerpetualModule.sol";
 import "../module/LiquidityPoolModule.sol";
+import "../module/LiquidityPoolModule2.sol";
 
 import "../Type.sol";
 import "./TestPerpetual.sol";
@@ -14,6 +15,7 @@ contract TestLiquidityPool is TestPerpetual {
     using PerpetualModule for PerpetualStorage;
     using CollateralModule for LiquidityPoolStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
 
     // debug
     function setGovernor(address governor) public {

@@ -6,6 +6,7 @@ import {
     toBytes32,
     getAccounts,
     createContract,
+    deployPoolCreator,
 } from '../scripts/utils';
 import "./helper";
 
@@ -35,8 +36,14 @@ describe('LiquidityPool', () => {
             CollateralModule,
             PerpetualModule
         });
+        const LiquidityPoolModule2 = await createContract("LiquidityPoolModule2", [], {
+            CollateralModule,
+            PerpetualModule,
+            LiquidityPoolModule
+        });
         liquidityPool = await createContract("TestLiquidityPool", [], {
             LiquidityPoolModule,
+            LiquidityPoolModule2,
             CollateralModule,
             PerpetualModule
         });
@@ -234,9 +241,10 @@ describe('LiquidityPool', () => {
     describe("operator", async () => {
 
         it("transferOperator", async () => {
-            const blackHole = await createContract("BlackHole");
+            var poolCreator = await createContract("TestTracer");
+            await poolCreator.testRegisterLiquidityPool(liquidityPool.address, user0.address);
 
-            await liquidityPool.setFactory(blackHole.address);
+            await liquidityPool.setFactory(poolCreator.address);
             await liquidityPool.setOperator(user0.address);
             expect(await liquidityPool.getOperator()).to.equal(user0.address);
 
@@ -263,12 +271,12 @@ describe('LiquidityPool', () => {
     })
 
     describe("trader", async () => {
-        let tracer;
+        let poolCreator;
         let oracle;
         let ctk;
 
         beforeEach(async () => {
-            tracer = await createContract("TestTracer")
+            poolCreator = await createContract("TestTracer");
             oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
             var now = 1000;
             await oracle.setMarkPrice(toWei("100"), now);
@@ -285,8 +293,8 @@ describe('LiquidityPool', () => {
             await liquidityPool.setState(0, 2);
 
             await liquidityPool.setOperator(user0.address);
-            await liquidityPool.setFactory(tracer.address);
-            await tracer.registerLiquidityPool(liquidityPool.address, user0.address);
+            await liquidityPool.setFactory(poolCreator.address);
+            await poolCreator.testRegisterLiquidityPool(liquidityPool.address, user0.address);
         })
 
         it("donateInsuranceFund", async () => {
@@ -317,7 +325,7 @@ describe('LiquidityPool', () => {
             await ctk.connect(user0).approve(liquidityPool.address, toWei("100"));
             expect(await ctk.balanceOf(user0.address), toWei("100"));
 
-            expect(await tracer.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.false;
+            expect(await poolCreator.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.false;
 
             await liquidityPool.depositP(0, user0.address, toWei("10"));
             var { cash, position } = await liquidityPool.callStatic.getMarginAccount(0, user0.address);
@@ -326,7 +334,7 @@ describe('LiquidityPool', () => {
             expect(await ctk.balanceOf(user0.address), toWei("90"));
             expect(await ctk.balanceOf(liquidityPool.address), toWei("10"));
 
-            expect(await tracer.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.true;
+            expect(await poolCreator.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.true;
 
         })
 
@@ -337,7 +345,7 @@ describe('LiquidityPool', () => {
             await ctk.connect(user0).approve(liquidityPool.address, toWei("100"));
 
             await liquidityPool.depositP(0, user0.address, toWei("10"));
-            expect(await tracer.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.true;
+            expect(await poolCreator.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.true;
             expect(await ctk.balanceOf(user0.address), toWei("90"));
             expect(await ctk.balanceOf(liquidityPool.address), toWei("10"));
 
@@ -348,7 +356,7 @@ describe('LiquidityPool', () => {
             expect(await ctk.balanceOf(user0.address), toWei("100"));
             expect(await ctk.balanceOf(liquidityPool.address), toWei("00"));
 
-            expect(await tracer.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.false;
+            expect(await poolCreator.isActiveLiquidityPoolOf(user0.address, liquidityPool.address, 0)).to.be.false;
         })
 
         it("clear-no-account", async () => {

@@ -8,6 +8,7 @@ import {
     createContract,
     createLiquidityPoolFactory,
     createFactory,
+    deployPoolCreator,
 } from '../scripts/utils';
 const { ethers } = require("hardhat");
 
@@ -36,15 +37,11 @@ describe('Perpetual2', () => {
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
+        var perp0Template = await LiquidityPoolFactory[0].deploy();
+        var perp1Template = await LiquidityPoolFactory[1].deploy();
         var govTemplate = await createContract("TestLpGovernor");
-        poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            vault.address,
-            toWei("0.001"),
-        )
-        await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
+        poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+        await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
         await symbol.addWhitelistedFactory(poolCreator.address);
     });
 
@@ -61,7 +58,7 @@ describe('Perpetual2', () => {
             const deployed = await poolCreator.callStatic.createLiquidityPool(ctk.address, 18, 998, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
             await poolCreator.createLiquidityPool(ctk.address, 18, 998, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
 
-            liquidityPool = await LiquidityPoolFactory.attach(deployed[0]);
+            liquidityPool = await ethers.getContractAt("LiquidityPoolAllHops", deployed[0]);
             await liquidityPool.createPerpetual(oracle.address,
                 [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
                 [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0"), toWei("5"), toWei("0.05"), toWei("0.01"), toWei("1")],

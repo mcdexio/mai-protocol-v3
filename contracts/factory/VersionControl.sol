@@ -19,7 +19,7 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.Bytes32Set;
 
     struct VersionDescription {
-        address liquidityPoolTemplate;
+        address[] liquidityPoolTemplate;
         address governorTemplate;
         uint256 compatibility;
     }
@@ -30,8 +30,8 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
 
     event AddVersion(
         bytes32 versionKey,
-        address indexed liquidityPoolTemplate,
-        address indexed governorTemplate,
+        address[] liquidityPoolTemplate,
+        address governorTemplate,
         address indexed creator,
         uint256 compatibility,
         string note
@@ -60,12 +60,15 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
      * @return  versionKey              The key of the version added.
      */
     function addVersion(
-        address liquidityPoolTemplate,
+        address[] memory liquidityPoolTemplate,
         address governorTemplate,
         uint256 compatibility,
         string calldata note
     ) external onlyOwner returns (bytes32 versionKey) {
-        require(liquidityPoolTemplate.isContract(), "implementation must be contract");
+        require(liquidityPoolTemplate.length > 0, "empty implementation");
+        for (uint256 i = 0; i < liquidityPoolTemplate.length; i++) {
+            require(liquidityPoolTemplate[i].isContract(), "implementation must be contract");
+        }
         require(governorTemplate.isContract(), "implementation must be contract");
 
         versionKey = _getVersionHash(liquidityPoolTemplate, governorTemplate);
@@ -103,7 +106,7 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
      *
      * @param   versionKey              The key of the version to get.
      * @return  liquidityPoolTemplate   The address of the liquidity pool template.
-     * @return  governorTemplate        The address of the governor template.
+     * @return  governorTemplate        The address of the governor implementation.
      * @return  compatibility           The compatibility of the specified version.
      */
     function getVersion(bytes32 versionKey)
@@ -111,14 +114,17 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
         view
         override
         returns (
-            address liquidityPoolTemplate,
+            address[] memory liquidityPoolTemplate,
             address governorTemplate,
             uint256 compatibility
         )
     {
         require(isVersionKeyValid(versionKey), "implementation is invalid");
         VersionDescription storage version = _versionDescriptions[versionKey];
-        liquidityPoolTemplate = version.liquidityPoolTemplate;
+        liquidityPoolTemplate = new address[](version.liquidityPoolTemplate.length);
+        for (uint256 i = 0; i < version.liquidityPoolTemplate.length; i++) {
+            liquidityPoolTemplate[i] = version.liquidityPoolTemplate[i];
+        }
         governorTemplate = version.governorTemplate;
         compatibility = version.compatibility;
     }
@@ -137,7 +143,7 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
         override
         returns (bytes32 appliedVersionKey)
     {
-        bytes32 deployedAddressHash = _getVersionHash(liquidityPool, governor);
+        bytes32 deployedAddressHash = _getDeploymentHash(liquidityPool, governor);
         appliedVersionKey = _deployedVersions[deployedAddressHash];
     }
 
@@ -188,20 +194,12 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
         versionKeys = _versionKeys.toArray(begin, end);
     }
 
-    function _getVersionHash(address liquidityPoolTemplate, address governorTemplate)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(liquidityPoolTemplate, governorTemplate));
-    }
-
     function _updateDeployedInstances(
         bytes32 versionKeys,
         address liquidityPool,
         address governor
     ) internal {
-        bytes32 deployedAddressHash = _getVersionHash(liquidityPool, governor);
+        bytes32 deployedAddressHash = _getDeploymentHash(liquidityPool, governor);
         _deployedVersions[deployedAddressHash] = versionKeys;
     }
 
@@ -210,11 +208,27 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
         address liquidityPool,
         address governor
     ) internal view {
-        bytes32 deployedAddressHash = _getVersionHash(liquidityPool, governor);
+        bytes32 deployedAddressHash = _getDeploymentHash(liquidityPool, governor);
         bytes32 baseVersionKey = _deployedVersions[deployedAddressHash];
         require(
             isVersionCompatible(targetVersionKey, baseVersionKey),
             "the target version is not compatible"
         );
+    }
+
+    function _getVersionHash(address[] memory liquidityPoolTemplate, address governorTemplate)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(liquidityPoolTemplate, governorTemplate));
+    }
+
+    function _getDeploymentHash(address liquidityPool, address governor)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(liquidityPool, governor));
     }
 }

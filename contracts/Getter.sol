@@ -13,6 +13,7 @@ import "./libraries/Utils.sol";
 import "./module/MarginAccountModule.sol";
 import "./module/PerpetualModule.sol";
 import "./module/LiquidityPoolModule.sol";
+import "./module/LiquidityPoolModule2.sol";
 import "./module/TradeModule.sol";
 import "./module/AMMModule.sol";
 
@@ -32,6 +33,7 @@ contract Getter is Storage, ILiquidityPoolGetter {
     using MarginAccountModule for PerpetualStorage;
     using PerpetualModule for PerpetualStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
     using TradeModule for LiquidityPoolStorage;
     using AMMModule for LiquidityPoolStorage;
 

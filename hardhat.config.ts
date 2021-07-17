@@ -1,10 +1,12 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
+// import "hardhat-typechain";
 import "./misc/typechain-ethers-v5-mcdex"
 import "hardhat-contract-sizer";
 // import "hardhat-gas-reporter";
 // import "hardhat-abi-exporter";
+
 import "solidity-coverage"
 import { retrieveLinkReferences } from "./scripts/deployer/linkReferenceParser";
 
@@ -120,6 +122,12 @@ module.exports = {
         hardhat: {
             allowUnlimitedContractSize: true
         },
+        bsc: {
+            url: "https://bsc-dataseed4.binance.org/",
+            accounts: [pk],
+            timeout: 300000,
+            confirmations: 1,
+        },
         kovan: {
             url: "https://kovan.infura.io/v3/",
             gasPrice: 1e9,
@@ -153,7 +161,7 @@ module.exports = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 1000
+                runs: 1
             }
         }
     },
@@ -163,18 +171,7 @@ module.exports = {
         cache: "./cache",
         artifacts: "./artifacts"
     },
-    contractSizer: {
-        alphaSort: true,
-        runOnCompile: false,
-        disambiguatePaths: false,
-    },
-    abiExporter: {
-        path: './abi',
-        clear: false,
-        flat: true,
-        only: ['PoolCreator', 'LiquidityPool'],
-    },
     mocha: {
-        timeout: 60000
+        timeout: 600000
     }
 };

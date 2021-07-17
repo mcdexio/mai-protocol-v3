@@ -7,6 +7,7 @@ import {
     getAccounts,
     createContract,
     createLiquidityPoolFactory,
+    deployPoolCreator,
 } from '../scripts/utils';
 import { TypedDataUtils } from 'ethers-eip712'
 import {
@@ -45,15 +46,11 @@ describe('Broker', () => {
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
         ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var perpTemplate = await LiquidityPoolFactory.deploy();
+        var perp0Template = await LiquidityPoolFactory[0].deploy();
+        var perp1Template = await LiquidityPoolFactory[1].deploy();
         var govTemplate = await createContract("TestLpGovernor");
-        poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(
-            symbol.address,
-            vault.address,
-            toWei("0.001"),
-        )
-        await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
+        poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+        await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
         await symbol.addWhitelistedFactory(poolCreator.address);
 
         const result = await poolCreator.callStatic.createLiquidityPool(
@@ -68,7 +65,7 @@ describe('Broker', () => {
             998,
             ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]),
         );
-        liquidityPool = await LiquidityPoolFactory.attach(result[0]);
+        liquidityPool = await ethers.getContractAt("LiquidityPoolAllHops", result[0]);
 
         oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
         now = Math.floor(Date.now() / 1000);

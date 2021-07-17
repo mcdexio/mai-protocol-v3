@@ -21,10 +21,8 @@ contract LpGovernor is
     RewardDistribution
 {
     using SafeMathUpgradeable for uint256;
-
     // admin:  to mint/burn token
     address internal _minter;
-
     mapping(address => uint256) public lastMintBlock;
 
     /**

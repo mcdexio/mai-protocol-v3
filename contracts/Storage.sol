@@ -5,10 +5,12 @@ import "@openzeppelin/contracts-upgradeable/GSN/ContextUpgradeable.sol";
 
 import "./interface/IPoolCreatorFull.sol";
 import "./module/LiquidityPoolModule.sol";
+import "./module/LiquidityPoolModule2.sol";
 import "./Type.sol";
 
 contract Storage is ContextUpgradeable {
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
 
     LiquidityPoolStorage internal _liquidityPool;
 
@@ -16,7 +18,7 @@ contract Storage is ContextUpgradeable {
         require(!IPoolCreatorFull(_liquidityPool.creator).isUniverseSettled(), "universe settled");
         _;
     }
-
+    
     modifier onlyExistedPerpetual(uint256 perpetualIndex) {
         require(perpetualIndex < _liquidityPool.perpetualCount, "perpetual not exist");
         _;

@@ -20,7 +20,7 @@ interface IVersionControl {
         external
         view
         returns (
-            address liquidityPoolTemplate,
+            address[] memory liquidityPoolTemplate,
             address governorTemplate,
             uint256 compatibility
         );
@@ -30,7 +30,6 @@ interface IVersionControl {
      *          Description contains creator, create time, compatibility and note
      *
      * @param  liquidityPool        The address of the liquidity pool.
-     * @param  governor             The address of the governor.
      * @return appliedVersionKey    The version key of given liquidity pool and governor.
      */
     function getAppliedVersionKey(address liquidityPool, address governor)

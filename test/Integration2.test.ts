@@ -2,7 +2,7 @@ const { ethers } = require("hardhat");
 import { expect } from "chai";
 
 import "./helper";
-import { toWei, createFactory, createContract, createLiquidityPoolFactory } from "../scripts/utils";
+import { toWei, createFactory, createContract, createLiquidityPoolFactory, deployPoolCreator } from "../scripts/utils";
 
 describe("integration2 - 2 perps. special pool states", () => {
   let USE_TARGET_LEVERAGE = 0x8000000;
@@ -45,11 +45,11 @@ describe("integration2 - 2 perps. special pool states", () => {
     var symbol = await createContract("SymbolService");
     await symbol.initialize(10000);
     ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-    var perpTemplate = await LiquidityPoolFactory.deploy();
+    var perp0Template = await LiquidityPoolFactory[0].deploy();
+    var perp1Template = await LiquidityPoolFactory[1].deploy();
     var govTemplate = await createContract("TestLpGovernor");
-    poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
-    await poolCreator.addVersion(perpTemplate.address, govTemplate.address, 0, "initial version");
+    poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+    await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
     await symbol.addWhitelistedFactory(poolCreator.address);
 
     const { liquidityPool, governor } = await poolCreator.callStatic.createLiquidityPool(
@@ -59,7 +59,7 @@ describe("integration2 - 2 perps. special pool states", () => {
       ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1])
     );
     await poolCreator.createLiquidityPool(ctk.address, 18, 998, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
-    perp = await LiquidityPoolFactory.attach(liquidityPool);
+    perp = await ethers.getContractAt("LiquidityPoolAllHops", liquidityPool);
 
     // oracle
     oracle1 = await createContract("OracleAdaptor", ["USD", "ETH"]);
@@ -496,7 +496,7 @@ describe("integration2 - 2 perps. special pool states", () => {
     await perp.connect(user1).deposit(0, user1.address, toWei("500"));
     await perp.connect(user2).addLiquidity(toWei("1000"));
     let now = Math.floor(Date.now() / 1000);
-    oracle1.setMarketClosed(true);
+    await oracle1.setMarketClosed(true);
     await expect(perp.callStatic.queryTrade(0, user1.address, toWei("3"), none, 0)).to.be.revertedWith(
       "market is closed now"
     );
@@ -510,7 +510,7 @@ describe("integration2 - 2 perps. special pool states", () => {
     await perp.connect(user1).deposit(0, user1.address, toWei("500"));
     await perp.connect(user2).addLiquidity(toWei("1000"));
     let now = Math.floor(Date.now() / 1000);
-    oracle1.setTerminated(true);
+    await oracle1.setTerminated(true);
     await expect(perp.connect(user1).trade(0, user1.address, toWei("3"), toWei("1150"), now + 999999, none, 0)).to.be.revertedWith(
       "perpetual should be in NORMAL state"
     );

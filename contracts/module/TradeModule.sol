@@ -12,6 +12,7 @@ import "../libraries/Utils.sol";
 
 import "./AMMModule.sol";
 import "./LiquidityPoolModule.sol";
+import "./LiquidityPoolModule2.sol";
 import "./MarginAccountModule.sol";
 import "./PerpetualModule.sol";
 
@@ -24,6 +25,7 @@ library TradeModule {
 
     using AMMModule for LiquidityPoolStorage;
     using LiquidityPoolModule for LiquidityPoolStorage;
+    using LiquidityPoolModule2 for LiquidityPoolStorage;
     using MarginAccountModule for PerpetualStorage;
     using PerpetualModule for PerpetualStorage;
     using MarginAccountModule for MarginAccount;
@@ -206,7 +208,8 @@ library TradeModule {
         perpetual.updateCash(trader, totalFee.neg());
         // trader deposit/withdraw
         if (flags.useTargetLeverage()) {
-            liquidityPool.adjustMarginLeverage(
+            adjustMarginLeverage(
+                liquidityPool,
                 perpetualIndex,
                 trader,
                 deltaPosition.neg(),
@@ -531,6 +534,124 @@ library TradeModule {
     }
 
     /**
+     * @dev     Deposit or withdraw to let effective leverage == target leverage
+     *
+     * @param   liquidityPool   The reference of liquidity pool storage.
+     * @param   perpetualIndex  The index of the perpetual in the liquidity pool.
+     * @param   trader          The address of the trader.
+     * @param   deltaPosition   The update position of the trader's account in the perpetual.
+     * @param   deltaCash       The update cash(collateral) of the trader's account in the perpetual.
+     * @param   totalFee        The total fee collected from the trader after the trade.
+     */
+    function adjustMarginLeverage(
+        LiquidityPoolStorage storage liquidityPool,
+        uint256 perpetualIndex,
+        address trader,
+        int256 deltaPosition,
+        int256 deltaCash,
+        int256 totalFee
+    ) public {
+        PerpetualStorage storage perpetual = liquidityPool.perpetuals[perpetualIndex];
+        // read perp
+        int256 position = perpetual.getPosition(trader);
+        int256 adjustCollateral;
+        (int256 closePosition, int256 openPosition) = Utils.splitAmount(
+            position.sub(deltaPosition),
+            deltaPosition
+        );
+        if (closePosition != 0 && openPosition == 0) {
+            // close only
+            adjustCollateral = adjustClosedMargin(
+                perpetual,
+                trader,
+                closePosition,
+                deltaCash,
+                totalFee
+            );
+        } else {
+            // open only or close + open
+            adjustCollateral = adjustOpenedMargin(
+                perpetual,
+                trader,
+                deltaPosition,
+                deltaCash,
+                closePosition,
+                openPosition,
+                totalFee
+            );
+        }
+        // real deposit/withdraw
+        if (adjustCollateral > 0) {
+            liquidityPool.deposit(perpetualIndex, trader, adjustCollateral);
+        } else if (adjustCollateral < 0) {
+            liquidityPool.withdraw(perpetualIndex, trader, adjustCollateral.neg());
+        }
+    }
+
+    function adjustClosedMargin(
+        PerpetualStorage storage perpetual,
+        address trader,
+        int256 closePosition,
+        int256 deltaCash,
+        int256 totalFee
+    ) public view returns (int256 adjustCollateral) {
+        int256 markPrice = perpetual.getMarkPrice();
+        int256 position2 = perpetual.getPosition(trader);
+        if (position2 == 0) {
+            // close all, withdraw all
+            return perpetual.getAvailableCash(trader).neg().min(0);
+        }
+        // when close, keep the margin ratio
+        // -withdraw == (availableCash2 * close - (deltaCash - fee) * position2 + reservedValue) / position1
+        // reservedValue = 0 if position2 == 0 else keeperGasReward * (-deltaPos)
+        adjustCollateral = perpetual.getAvailableCash(trader).wmul(closePosition);
+        adjustCollateral = adjustCollateral.sub(deltaCash.sub(totalFee).wmul(position2));
+        if (position2 != 0) {
+            adjustCollateral = adjustCollateral.sub(perpetual.keeperGasReward.wmul(closePosition));
+        }
+        adjustCollateral = adjustCollateral.wdiv(position2.sub(closePosition));
+        // withdraw only when IM is satisfied
+        adjustCollateral = adjustCollateral.max(
+            perpetual.getAvailableMargin(trader, markPrice).neg()
+        );
+        // never deposit when close positions
+        adjustCollateral = adjustCollateral.min(0);
+    }
+
+    // open only or close + open
+    function adjustOpenedMargin(
+        PerpetualStorage storage perpetual,
+        address trader,
+        int256 deltaPosition,
+        int256 deltaCash,
+        int256 closePosition,
+        int256 openPosition,
+        int256 totalFee
+    ) public view returns (int256 adjustCollateral) {
+        int256 markPrice = perpetual.getMarkPrice();
+        int256 oldMargin = perpetual.getMargin(trader, markPrice);
+        int256 leverage = perpetual.getTargetLeverage(trader);
+        require(leverage > 0, "target leverage = 0");
+        // openPositionMargin
+        adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
+        if (perpetual.getPosition(trader).sub(deltaPosition) != 0 && closePosition == 0) {
+            // open from non-zero position
+            // adjustCollateral = openPositionMargin + fee - pnl
+            adjustCollateral = adjustCollateral
+                .add(totalFee)
+                .sub(markPrice.wmul(deltaPosition))
+                .sub(deltaCash);
+        } else {
+            // open from 0 or close + open
+            adjustCollateral = adjustCollateral.add(perpetual.keeperGasReward).sub(oldMargin);
+        }
+        // make sure after adjust: trader is initial margin safe
+        adjustCollateral = adjustCollateral.max(
+            perpetual.getAvailableMargin(trader, markPrice).neg()
+        );
+    }
+
+    /**
      * @dev     A readonly version of trade
      *
      *          This function was written post-audit. So there's a lot of repeated logic here.
@@ -655,7 +776,7 @@ library TradeModule {
         account.cash = account.cash.add(totalFee.neg());
         // trader deposit/withdraw
         if (flags.useTargetLeverage()) {
-            adjustCollateral = LiquidityPoolModule.readonlyAdjustMarginLeverage(
+            adjustCollateral = readonlyAdjustMarginLeverage(
                 perpetual,
                 account,
                 deltaPosition.neg(),
@@ -701,7 +822,7 @@ library TradeModule {
         int256 tradeValue,
         bool hasOpened
     )
-        public
+        internal
         view
         returns (
             int256 lpFee,
@@ -717,7 +838,7 @@ library TradeModule {
             operatorFee = tradeValue.wmul(perpetual.operatorFeeRate);
         }
         int256 totalFee = lpFee.add(operatorFee).add(vaultFee);
-        int256 availableMargin = LiquidityPoolModule.readonlyGetAvailableMargin(
+        int256 availableMargin = readonlyGetAvailableMargin(
             perpetual,
             trader,
             perpetual.getMarkPrice()
@@ -745,5 +866,138 @@ library TradeModule {
             lpFee = lpFee.sub(lpFeeRebate);
             operatorFee = operatorFee.sub(operatorFeeRabate);
         }
+    }
+
+    // A readonly version of adjustMarginLeverage. This function was written post-audit. So there's a lot of repeated logic here.
+    function readonlyAdjustMarginLeverage(
+        PerpetualStorage storage perpetual,
+        MarginAccount memory trader,
+        int256 deltaPosition,
+        int256 deltaCash,
+        int256 totalFee
+    ) public view returns (int256 adjustCollateral) {
+        // read perp
+        (int256 closePosition, int256 openPosition) = Utils.splitAmount(
+            trader.position.sub(deltaPosition),
+            deltaPosition
+        );
+        if (closePosition != 0 && openPosition == 0) {
+            // close only
+            adjustCollateral = readonlyAdjustClosedMargin(
+                perpetual,
+                trader,
+                closePosition,
+                deltaCash,
+                totalFee
+            );
+        } else {
+            // open only or close + open
+            adjustCollateral = readonlyAdjustOpenedMargin(
+                perpetual,
+                trader,
+                deltaPosition,
+                deltaCash,
+                closePosition,
+                openPosition,
+                totalFee
+            );
+        }
+    }
+
+    // A readonly version of adjustClosedMargin. This function was written post-audit. So there's a lot of repeated logic here.
+    function readonlyAdjustClosedMargin(
+        PerpetualStorage storage perpetual,
+        MarginAccount memory trader,
+        int256 closePosition,
+        int256 deltaCash,
+        int256 totalFee
+    ) public view returns (int256 adjustCollateral) {
+        int256 markPrice = perpetual.getMarkPrice();
+        int256 position2 = trader.position;
+        // was perpetual.getAvailableCash(trader)
+        adjustCollateral = trader.cash.sub(position2.wmul(perpetual.unitAccumulativeFunding));
+        if (position2 == 0) {
+            // close all, withdraw all
+            return adjustCollateral.neg().min(0);
+        }
+        // was adjustClosedMargin
+        adjustCollateral = adjustCollateral.wmul(closePosition);
+        adjustCollateral = adjustCollateral.sub(deltaCash.sub(totalFee).wmul(position2));
+        if (position2 != 0) {
+            adjustCollateral = adjustCollateral.sub(perpetual.keeperGasReward.wmul(closePosition));
+        }
+        adjustCollateral = adjustCollateral.wdiv(position2.sub(closePosition));
+        // withdraw only when IM is satisfied
+        adjustCollateral = adjustCollateral.max(
+            readonlyGetAvailableMargin(perpetual, trader, markPrice).neg()
+        );
+        // never deposit when close positions
+        adjustCollateral = adjustCollateral.min(0);
+    }
+
+    // A readonly version of adjustOpenedMargin. This function was written post-audit. So there's a lot of repeated logic here.
+    function readonlyAdjustOpenedMargin(
+        PerpetualStorage storage perpetual,
+        MarginAccount memory trader,
+        int256 deltaPosition,
+        int256 deltaCash,
+        int256 closePosition,
+        int256 openPosition,
+        int256 totalFee
+    ) public view returns (int256 adjustCollateral) {
+        int256 markPrice = perpetual.getMarkPrice();
+        int256 oldMargin = readonlyGetMargin(perpetual, trader, markPrice);
+        // was perpetual.getTargetLeverage
+        int256 leverage = trader.targetLeverage;
+        {
+            require(perpetual.initialMarginRate != 0, "initialMarginRate is not set");
+            int256 maxLeverage = Constant.SIGNED_ONE.wdiv(perpetual.initialMarginRate);
+            leverage = leverage == 0 ? perpetual.defaultTargetLeverage.value : leverage;
+            leverage = leverage.min(maxLeverage);
+        }
+        require(leverage > 0, "target leverage = 0");
+        // openPositionMargin
+        adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
+        if (trader.position.sub(deltaPosition) != 0 && closePosition == 0) {
+            // open from non-zero position
+            // adjustCollateral = openPositionMargin + fee - pnl
+            adjustCollateral = adjustCollateral
+                .add(totalFee)
+                .sub(markPrice.wmul(deltaPosition))
+                .sub(deltaCash);
+        } else {
+            // open from 0 or close + open
+            adjustCollateral = adjustCollateral.add(perpetual.keeperGasReward).sub(oldMargin);
+        }
+        // make sure after adjust: trader is initial margin safe
+        adjustCollateral = adjustCollateral.max(
+            readonlyGetAvailableMargin(perpetual, trader, markPrice).neg()
+        );
+    }
+
+    // A readonly version of getMargin. This function was written post-audit. So there's a lot of repeated logic here.
+    function readonlyGetMargin(
+        PerpetualStorage storage perpetual,
+        MarginAccount memory account,
+        int256 price
+    ) public view returns (int256 margin) {
+        margin = account.position.wmul(price).add(
+            account.cash.sub(account.position.wmul(perpetual.unitAccumulativeFunding))
+        );
+    }
+
+    // A readonly version of getAvailableMargin. This function was written post-audit. So there's a lot of repeated logic here.
+    function readonlyGetAvailableMargin(
+        PerpetualStorage storage perpetual,
+        MarginAccount memory account,
+        int256 price
+    ) public view returns (int256 availableMargin) {
+        int256 threshold = account.position == 0
+            ? 0 // was getInitialMargin
+            : account.position.wmul(price).wmul(perpetual.initialMarginRate).abs().add(
+                perpetual.keeperGasReward
+            );
+        // was getAvailableMargin
+        availableMargin = readonlyGetMargin(perpetual, account, price).sub(threshold);
     }
 }

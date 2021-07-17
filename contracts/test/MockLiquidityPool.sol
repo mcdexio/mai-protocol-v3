@@ -47,7 +47,7 @@ contract MockLiquidityPool {
             // [4] donatedInsuranceFund,
             int256[5] memory intNums,
             // [0] collateralDecimals,
-            // [1] perpetualCount
+            // [1] perpetualCount,
             // [2] fundingTime,
             // [3] operatorExpiration,
             uint256[6] memory uintNums
