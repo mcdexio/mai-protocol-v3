@@ -1,4 +1,5 @@
 import { task } from "hardhat/config";
+import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "./misc/typechain-ethers-v5-mcdex"
 import "hardhat-contract-sizer";
