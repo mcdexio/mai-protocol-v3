@@ -14,21 +14,21 @@ const OperatorProxy = new ethers.utils.Interface([
 const LiquidityPool = new ethers.utils.Interface([
   'function createPerpetual(address oracle, int256[9] calldata baseParams, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)',
   'function propose(string[] calldata signatures, bytes[] calldata calldatas, string calldata description)',
+  'function setPerpetualBaseParameter(uint256 perpetualIndex, int256[9] calldata baseParams)',
+  'function setPerpetualRiskParameter(uint256 perpetualIndex, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)',
 ])
 
 // ===============================================================================================
 //                                    updatePerpetualRiskParameter
 // ===============================================================================================
-// alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
-// mainnet!
+// //            alpha           beta1            beta2              frLimit        lev         maxClose       frFactor        defaultLev
+// // mainnet!
 // const risk = [toWei("0.001"), toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")]
-// mainnet test
-// const risk = [toWei("0.01"), toWei("0.495"),      toWei("0.3"),     toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")]
-// printNumberArray(risk)
+// // printNumberArray(risk)
 // console.log(
 //   OperatorProxy.encodeFunctionData("updatePerpetualRiskParameter", [
 //     '0xab324146c49b23658e5b3930e641bdbdf089cbac', // MAIN USDC POOL!
-//     0,
+//     0, // perpetualIndex
 //     risk
 //   ])
 // )
@@ -49,7 +49,7 @@ const LiquidityPool = new ethers.utils.Interface([
 //         // imr          mmr            operatorfr        lpfr              rebate        penalty        keeper       insur         oi
 //         [toWei("0.04"), toWei("0.03"), toWei("0.00010"), toWei("0.00055"), toWei("0.2"), toWei("0.01"), toWei("10"), toWei("0.5"), toWei("3")],
 //         // alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
-//         [toWei("0.00075"), toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
+//         [toWei("0.001"),   toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
 //         [toWei("0"),       toWei("0"),      toWei("0"),       toWei("0"),    toWei("0"), toWei("0"),    toWei("0"),     toWei("0")],
 //         [toWei("0.1"),     toWei("0.5"),    toWei("0.5"),     toWei("0.1"),  toWei("5"), toWei("1"),    toWei("0.1"),   toWei("10000000")]    
 //       ]).slice(2 + 8), // skip the function signature. important!
@@ -88,21 +88,51 @@ const LiquidityPool = new ethers.utils.Interface([
 //   ])
 // )
 // ===============================================================================================
-//                             vote - setPerpetualBaseParameter
-// ===============================================================================================
-// setPerpetualBaseParameter(uint256,int256[9])
-// TODO
-// ===============================================================================================
-//                             vote - setPerpetualRiskParameter
-// ===============================================================================================
-// setPerpetualRiskParameter(uint256,int256[8],int256[8],int256[8])
-// TODO
-// ===============================================================================================
 //            vote - setPerpetualBaseParameter + setPerpetualRiskParameter
 // ===============================================================================================
-// TODO
-// ===============================================================================================
-// gnosis
-// function submitTransaction(address destination, uint value, bytes memory data)
-  
-// 
+// console.log(
+//   OperatorProxy.encodeFunctionData("propose", [
+//     '0xab324146c49b23658e5b3930e641bdbdf089cbac', // MAIN USDC POOL!
+//     [
+//       // signatures
+//       "setPerpetualBaseParameter(uint256,int256[9])",
+//       "setPerpetualRiskParameter(uint256,int256[8],int256[8],int256[8])",
+//     ],
+//     // calldatas
+//     [
+//       '0x' + LiquidityPool.encodeFunctionData("setPerpetualBaseParameter", [
+//         0, // ETH
+//         // imr          mmr            operatorfr        lpfr              rebate        penalty        keeper       insur         oi
+//         [toWei("0.04"), toWei("0.03"), toWei("0.00010"), toWei("0.00055"), toWei("0.2"), toWei("0.01"), toWei("20"), toWei("0.5"), toWei("3")],
+//       ]).slice(2 + 8), // skip the function signature. important!
+//       '0x' + LiquidityPool.encodeFunctionData("setPerpetualRiskParameter", [
+//         0, // ETH
+//         // alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
+//         [toWei("0.001"),   toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
+//         [toWei("0"),       toWei("0"),      toWei("0"),       toWei("0"),    toWei("0"), toWei("0"),    toWei("0"),     toWei("0")],
+//         [toWei("0.1"),     toWei("0.5"),    toWei("0.5"),     toWei("0.1"),  toWei("5"), toWei("1"),    toWei("0.1"),   toWei("10000000")]    
+//       ]).slice(2 + 8), // skip the function signature. important!
+//     ],
+//     JSON.stringify({
+//       perpetualStorage: JSON.stringify({
+//         "initialMarginRate": "0.04",
+//         "maintenanceMarginRate": "0.03",
+//         "operatorFeeRate": "0.0001",
+//         "lpFeeRate": "0.00055",
+//         "referrerRebateRate": "0.2",
+//         "liquidationPenaltyRate": "0.01",
+//         "keeperGasReward": "10",
+//         "insuranceFundRate": "0.5",
+//         "maxOpenInterestRate": "1",
+//         "halfSpread": {"value": "0.001", "minValue": "0", "maxValue": "0.1" },
+//         "openSlippageFactor": { "value": "0.0075", "minValue": "0", "maxValue": "0.5" },
+//         "closeSlippageFactor": { "value": "0.00525", "minValue": "0", "maxValue": "0.5" },
+//         "fundingRateLimit": { "value": "0.01", "minValue": "0", "maxValue": "0.1" },
+//         "ammMaxLeverage": { "value": "1", "minValue": "0", "maxValue": "5" },
+//         "maxClosePriceDiscount": { "value": "0.05", "minValue": "0", "maxValue": "1" },
+//         "fundingRateFactor": { "value": "0.005", "minValue": "0", "maxValue": "0.1" },
+//         "defaultTargetLeverage": { "value": "10", "minValue": "0", "maxValue": "10000000" },
+//       })
+//     }),
+//   ])
+// )
