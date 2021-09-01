@@ -121,9 +121,9 @@ const LiquidityPool = new ethers.utils.Interface([
 //         "lpFeeRate": "0.00055",
 //         "referrerRebateRate": "0.2",
 //         "liquidationPenaltyRate": "0.01",
-//         "keeperGasReward": "10",
+//         "keeperGasReward": "10", // 10 => 20
 //         "insuranceFundRate": "0.5",
-//         "maxOpenInterestRate": "1",
+//         "maxOpenInterestRate": "3",
 //         "halfSpread": {"value": "0.001", "minValue": "0", "maxValue": "0.1" },
 //         "openSlippageFactor": { "value": "0.0075", "minValue": "0", "maxValue": "0.5" },
 //         "closeSlippageFactor": { "value": "0.00525", "minValue": "0", "maxValue": "0.5" },
