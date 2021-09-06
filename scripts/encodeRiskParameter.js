@@ -21,8 +21,8 @@ const LiquidityPool = new ethers.utils.Interface([
 // ===============================================================================================
 //                                    updatePerpetualRiskParameter
 // ===============================================================================================
-// //            alpha           beta1            beta2              frLimit        lev         maxClose       frFactor        defaultLev
-// // mainnet!
+//            alpha           beta1            beta2              frLimit        lev         maxClose       frFactor        defaultLev
+// mainnet!
 // const risk = [toWei("0.001"), toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")]
 // // printNumberArray(risk)
 // console.log(
@@ -82,7 +82,7 @@ const LiquidityPool = new ethers.utils.Interface([
 //     // imr          mmr            operatorfr        lpfr              rebate        penalty        keeper       insur         oi
 //     [toWei("0.04"), toWei("0.03"), toWei("0.00010"), toWei("0.00055"), toWei("0.2"), toWei("0.01"), toWei("10"), toWei("0.5"), toWei("3")],
 //     // alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
-//     [toWei("0.00075"), toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
+//     [toWei("0.001"),   toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
 //     [toWei("0"),       toWei("0"),      toWei("0"),       toWei("0"),    toWei("0"), toWei("0"),    toWei("0"),     toWei("0")],
 //     [toWei("0.1"),     toWei("0.5"),    toWei("0.5"),     toWei("0.1"),  toWei("5"), toWei("1"),    toWei("0.1"),   toWei("10000000")]
 //   ])
@@ -101,12 +101,12 @@ const LiquidityPool = new ethers.utils.Interface([
 //     // calldatas
 //     [
 //       '0x' + LiquidityPool.encodeFunctionData("setPerpetualBaseParameter", [
-//         0, // ETH
+//         0, // perpetualIndex
 //         // imr          mmr            operatorfr        lpfr              rebate        penalty        keeper       insur         oi
 //         [toWei("0.04"), toWei("0.03"), toWei("0.00010"), toWei("0.00055"), toWei("0.2"), toWei("0.01"), toWei("20"), toWei("0.5"), toWei("3")],
 //       ]).slice(2 + 8), // skip the function signature. important!
 //       '0x' + LiquidityPool.encodeFunctionData("setPerpetualRiskParameter", [
-//         0, // ETH
+//         0, // perpetualIndex
 //         // alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
 //         [toWei("0.001"),   toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
 //         [toWei("0"),       toWei("0"),      toWei("0"),       toWei("0"),    toWei("0"), toWei("0"),    toWei("0"),     toWei("0")],
