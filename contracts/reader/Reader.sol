@@ -335,7 +335,7 @@ contract Reader {
     }
 
     /**
-     * @notice  Get the info of active accounts in the perpetual whose index with range [begin, end).
+     * @notice  Get the info of active accounts in the perpetual whose index within range [begin, end).
      * @param   liquidityPool   The address of the liquidity pool
      * @param   perpetualIndex  The index of the perpetual in the liquidity pool.
      * @param   begin           The begin index of account to retrieve.
@@ -357,6 +357,25 @@ contract Reader {
             begin,
             end
         );
+        return getAccountsInfoByAddress(liquidityPool, perpetualIndex, accounts);
+    }
+
+    /**
+     * @notice  Get the info of given accounts.
+     * @param   liquidityPool   The address of the liquidity pool
+     * @param   perpetualIndex  The index of the perpetual in the liquidity pool.
+     * @param   accounts        Account addresses.
+     * @return  isSynced        True if the funding state is synced to real-time data. False if
+     *                          error happens (oracle error, zero price etc.). In this case,
+     *                          trading, withdraw (if position != 0), addLiquidity, removeLiquidity
+     *                          will fail
+     * @return  result          An array of active accounts' info.
+     */
+    function getAccountsInfoByAddress(
+        address liquidityPool,
+        uint256 perpetualIndex,
+        address[] memory accounts
+    ) public returns (bool isSynced, AccountsResult[] memory result) {
         try ILiquidityPool(liquidityPool).forceToSyncState() {
             isSynced = true;
         } catch {
