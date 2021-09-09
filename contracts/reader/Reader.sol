@@ -18,6 +18,8 @@ interface IInverseStateService {
 
 contract Reader {
     using SafeMathExt for uint256;
+    using SafeMathExt for int256;
+    using SignedSafeMathUpgradeable for int256;
     using Address for address;
 
     IInverseStateService public immutable inverseStateService;
@@ -64,6 +66,7 @@ contract Reader {
         int256 position;
         int256 margin;
         bool isSafe;
+        int256 availableCash;
     }
 
     constructor(address inverseStateService_) {
@@ -301,7 +304,11 @@ contract Reader {
 
     function readIndexPrices(address[] memory oracles)
         public
-        returns (bool[] memory isSuccess, int256[] memory indexPrices, uint256[] memory timestamps)
+        returns (
+            bool[] memory isSuccess,
+            int256[] memory indexPrices,
+            uint256[] memory timestamps
+        )
     {
         isSuccess = new bool[](oracles.length);
         indexPrices = new int256[](oracles.length);
@@ -310,7 +317,10 @@ contract Reader {
             if (!oracles[i].isContract()) {
                 continue;
             }
-            try IOracle(oracles[i]).priceTWAPShort() returns (int256 indexPrice, uint256 timestamp) {
+            try IOracle(oracles[i]).priceTWAPShort() returns (
+                int256 indexPrice,
+                uint256 timestamp
+            ) {
                 isSuccess[i] = true;
                 indexPrices[i] = indexPrice;
                 timestamps[i] = timestamp;
@@ -382,17 +392,22 @@ contract Reader {
             isSynced = false;
         }
         result = new AccountsResult[](accounts.length);
+        int256[39] memory nums;
+        (, , nums) = ILiquidityPoolFull(liquidityPool).getPerpetualInfo(perpetualIndex);
+        int256 unitAccumulativeFunding = nums[4];
         for (uint256 i = 0; i < accounts.length; i++) {
+            int256 cash;
             int256 margin;
             int256 position;
             bool isMaintenanceMarginSafe;
-            (, position, , margin, , , isMaintenanceMarginSafe, , ) = ILiquidityPoolFull(
+            (cash, position, , margin, , , isMaintenanceMarginSafe, , ) = ILiquidityPoolFull(
                 liquidityPool
             ).getMarginAccount(perpetualIndex, accounts[i]);
             result[i].account = accounts[i];
             result[i].position = position;
             result[i].margin = margin;
             result[i].isSafe = isMaintenanceMarginSafe;
+            result[i].availableCash = cash.sub(position.wmul(unitAccumulativeFunding));
         }
     }
 
