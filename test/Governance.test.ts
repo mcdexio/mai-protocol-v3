@@ -29,10 +29,11 @@ describe('Governance', () => {
         const CollateralModule = await createContract("CollateralModule")
         const PerpetualModule = await createContract("PerpetualModule");
         const LiquidityPoolModule = await createContract("LiquidityPoolModule", [], { CollateralModule, AMMModule, PerpetualModule });
+        const LiquidityPoolModule2 = await createContract("LiquidityPoolModule2", [], { CollateralModule, PerpetualModule, LiquidityPoolModule });
 
         TestGovernance = await createFactory(
             "TestGovernance",
-            { PerpetualModule, LiquidityPoolModule, CollateralModule }
+            { PerpetualModule, LiquidityPoolModule, LiquidityPoolModule2, CollateralModule }
         );
         oracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
         var now = Math.floor(Date.now() / 1000);

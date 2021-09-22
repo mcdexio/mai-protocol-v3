@@ -7,7 +7,7 @@ import "../factory/Tracer.sol";
 contract TestTracer is Tracer {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    function testRegisterLiquidityPool(address liquidityPool, address operator) external {
+    function registerLiquidityPool(address liquidityPool, address operator) external {
         _registerLiquidityPool(liquidityPool, operator);
     }
 

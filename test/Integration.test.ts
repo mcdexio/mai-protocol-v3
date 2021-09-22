@@ -596,8 +596,7 @@ describe("integration - 4 perps, 1 trader. open + close", () => {
     var perp0Template = await LiquidityPoolFactory[0].deploy();
     var perp1Template = await LiquidityPoolFactory[1].deploy();
     var govTemplate = await createContract("TestLpGovernor");
-    var poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
+    var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
     await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
     await symbol.addWhitelistedFactory(poolCreator.address);
 
