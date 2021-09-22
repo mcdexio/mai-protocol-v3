@@ -242,7 +242,7 @@ describe('LiquidityPool', () => {
 
         it("transferOperator", async () => {
             var poolCreator = await createContract("TestTracer");
-            await poolCreator.testRegisterLiquidityPool(liquidityPool.address, user0.address);
+            await poolCreator.registerLiquidityPool(liquidityPool.address, user0.address);
 
             await liquidityPool.setFactory(poolCreator.address);
             await liquidityPool.setOperator(user0.address);
@@ -294,7 +294,7 @@ describe('LiquidityPool', () => {
 
             await liquidityPool.setOperator(user0.address);
             await liquidityPool.setFactory(poolCreator.address);
-            await poolCreator.testRegisterLiquidityPool(liquidityPool.address, user0.address);
+            await poolCreator.registerLiquidityPool(liquidityPool.address, user0.address);
         })
 
         it("donateInsuranceFund", async () => {

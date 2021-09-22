@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 import { BigNumber as BN } from "ethers";
-import { toWei, fromWei, createFactory, createContract, createLiquidityPoolFactory } from "../scripts/utils";
+import { toWei, fromWei, createFactory, createContract, createLiquidityPoolFactory, deployPoolCreator } from "../scripts/utils";
 
 describe("universeSettle", () => {
   it("main", async () => {
@@ -22,8 +22,7 @@ describe("universeSettle", () => {
     var perp0Template = await LiquidityPoolFactory[0].deploy();
     var perp1Template = await LiquidityPoolFactory[1].deploy();
     var govTemplate = await createContract("TestLpGovernor");
-    var poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
+    var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
     await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
     await symbol.addWhitelistedFactory(poolCreator.address);
 
@@ -142,8 +141,7 @@ describe("universeSettle", () => {
     var perp0Template = await LiquidityPoolFactory[0].deploy();
     var perp1Template = await LiquidityPoolFactory[1].deploy();
     var govTemplate = await createContract("TestLpGovernor");
-    var poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
+    var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
     await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
     await symbol.addWhitelistedFactory(poolCreator.address);
 
@@ -189,8 +187,7 @@ describe("universeSettle", () => {
     var perp0Template = await LiquidityPoolFactory[0].deploy();
     var perp1Template = await LiquidityPoolFactory[1].deploy();
     var govTemplate = await createContract("TestLpGovernor");
-    var poolCreator = await createContract("PoolCreator");
-    await poolCreator.initialize(symbol.address, vault.address, toWei("0.001"));
+    var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
     await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
     await symbol.addWhitelistedFactory(poolCreator.address);
 
