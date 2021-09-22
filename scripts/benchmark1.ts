@@ -64,7 +64,6 @@ async function main(_, deployer, accounts) {
         vault,
         vaultFeeRate
     ))
-    await poolCreator.callStatic.upgradeAdmin()
     await ensureFinished(symbolService.addWhitelistedFactory(poolCreator.address))
 
     // add version

@@ -75,6 +75,5 @@ export async function deployPoolCreator(symbol, vault, vaultFeeRate, contractNam
         vault.address,
         vaultFeeRate
     )
-    await poolCreator.callStatic.upgradeAdmin()
     return poolCreator
 }
