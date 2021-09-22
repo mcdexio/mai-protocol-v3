@@ -10,7 +10,6 @@ interface IGovernor {
         string memory symbol,
         address minter,
         address target_,
-        address rewardToken,
         address poolCreator
     ) external;
 

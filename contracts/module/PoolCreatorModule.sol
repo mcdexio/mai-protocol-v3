@@ -88,7 +88,6 @@ library PoolCreatorModule {
         address poolCreator,
         address operator,
         bytes32 versionKey,
-        address mcbToken,
         address collateral,
         uint256 collateralDecimals,
         int256 nonce,
@@ -118,7 +117,6 @@ library PoolCreatorModule {
             "STK",
             liquidityPool,
             liquidityPool,
-            mcbToken,
             address(this)
         );
         // [EVENT UPDATE]

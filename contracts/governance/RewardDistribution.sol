@@ -14,7 +14,6 @@ abstract contract RewardDistribution is Initializable, ContextUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     IPoolCreatorFull public poolCreator;
-    IERC20Upgradeable public rewardToken;
 
     uint256 public periodFinish;
     uint256 public rewardRate;
@@ -44,12 +43,16 @@ abstract contract RewardDistribution is Initializable, ContextUpgradeable {
 
     function totalSupply() public view virtual returns (uint256);
 
-    function __RewardDistribution_init_unchained(address rewardToken_, address poolCreator_)
+    function __RewardDistribution_init_unchained(address poolCreator_)
         internal
         initializer
     {
-        rewardToken = IERC20Upgradeable(rewardToken_);
         poolCreator = IPoolCreatorFull(poolCreator_);
+    }
+
+    function getRewardToken() public view returns (IERC20Upgradeable) {
+        address mcb = poolCreator.getMCBToken();
+        return IERC20Upgradeable(mcb);
     }
 
     /**
@@ -143,7 +146,7 @@ abstract contract RewardDistribution is Initializable, ContextUpgradeable {
         uint256 reward = earned(account);
         if (reward > 0) {
             rewards[account] = 0;
-            rewardToken.safeTransfer(account, reward);
+            getRewardToken().safeTransfer(account, reward);
             emit RewardPaid(account, reward);
         }
     }

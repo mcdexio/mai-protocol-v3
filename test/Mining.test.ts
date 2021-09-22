@@ -30,14 +30,13 @@ describe('Minging', () => {
         rtk = await createContract("CustomERC20", ["RTK", "RTK", 18]);
         miner = stk;
 
-        const poolCreator = await createContract("MockPoolCreator", [user1.address])
+        const poolCreator = await createContract("MockPoolCreator", [user1.address, rtk.address])
 
         await stk.initialize(
             "MCDEX governor token",
             "MGT",
             user0.address,
             "0x0000000000000000000000000000000000000000",
-            rtk.address,
             poolCreator.address
         );
     });

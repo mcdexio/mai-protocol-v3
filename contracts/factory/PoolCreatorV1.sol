@@ -84,7 +84,6 @@ abstract contract PoolCreatorV1 is
             address(this),
             operator,
             versionKey,
-            getMCBToken(),
             collateral,
             collateralDecimals,
             nonce,

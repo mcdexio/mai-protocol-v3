@@ -48,14 +48,13 @@ describe('GovernorAlpha', () => {
         rtk = await createContract("CustomERC20", ["RTK", "RTK", 18]);
         target = await createContract("MockLiquidityPool");
         governor = stk;
-        const poolCreator = await createContract("MockPoolCreator", [user0.address])
+        const poolCreator = await createContract("MockPoolCreator", [user0.address, rtk.address])
 
         await stk.initialize(
             "MCDEX governor token",
             "MGT",
             user0.address,
             target.address,
-            rtk.address,
             poolCreator.address
         );
 

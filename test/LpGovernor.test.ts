@@ -41,14 +41,13 @@ describe('LpGovernor', () => {
         target = await createContract("MockLiquidityPool");
         governor = stk;
 
-        poolCreator = await createContract("MockPoolCreator", [user0.address])
+        poolCreator = await createContract("MockPoolCreator", [user0.address, rtk.address])
 
         await stk.initialize(
             "MCDEX governor token",
             "MGT",
             user0.address,
             target.address,
-            rtk.address,
             poolCreator.address
         );
     });
