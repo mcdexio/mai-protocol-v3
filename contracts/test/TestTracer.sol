@@ -2,12 +2,17 @@
 pragma solidity 0.7.4;
 pragma experimental ABIEncoderV2;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "../factory/Tracer.sol";
 
 contract TestTracer is Tracer {
-    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
+    using SafeMath for uint256;
+    using SafeMathExt for uint256;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    function registerLiquidityPool(address liquidityPool, address operator) external {
+    function registerLiquidityPool(address liquidityPool, address operator) public {
         _registerLiquidityPool(liquidityPool, operator);
     }
 
