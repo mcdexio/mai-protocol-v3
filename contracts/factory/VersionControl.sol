@@ -106,7 +106,7 @@ contract VersionControl is OwnableUpgradeable, IVersionControl {
      *
      * @param   versionKey              The key of the version to get.
      * @return  liquidityPoolTemplate   The address of the liquidity pool template.
-     * @return  governorTemplate        The address of the governor implementation.
+     * @return  governorTemplate        The address of the governor template.
      * @return  compatibility           The compatibility of the specified version.
      */
     function getVersion(bytes32 versionKey)
