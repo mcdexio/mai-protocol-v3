@@ -214,7 +214,7 @@ abstract contract GovernorAlpha is Initializable, ContextUpgradeable {
      * @dev     [ConfirmBeforeDeployment]
      */
     function votingDelay() public pure virtual returns (uint256) {
-        return 5;
+        return 1;
     }
 
     /**
