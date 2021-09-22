@@ -22,8 +22,8 @@ const LiquidityPool = new ethers.utils.Interface([
 //                                    updatePerpetualRiskParameter
 // ===============================================================================================
 //            alpha           beta1            beta2              frLimit        lev         maxClose       frFactor        defaultLev
-// mainnet!
-// const risk = [toWei("0.001"), toWei("0.0075"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")]
+// // mainnet!
+// const risk = [toWei("0.0004"), toWei("0.0185"), toWei("0.01295"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")]
 // // printNumberArray(risk)
 // console.log(
 //   OperatorProxy.encodeFunctionData("updatePerpetualRiskParameter", [
