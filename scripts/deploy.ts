@@ -65,8 +65,8 @@ async function main(_, deployer, accounts) {
     // const vault = "0xa04197E5F7971E7AEf78Cf5Ad2bC65aaC1a967Aa"
     // const vaultFeeRate = toWei("0.00015");
     // BSC
-    const upgradeAdmin = "0x93a9182883C1019e1dBEbB5d40C140e7680cd151"
-    const vault = "0xa04197E5F7971E7AEf78Cf5Ad2bC65aaC1a967Aa"
+    const upgradeAdmin = "0xd80c8fF02Ac8917891C47559d415aB513B44DCb6"
+    const vault = "0xE815dC14bCfAa6C6FBa912c108576A822CC51473"
     const vaultFeeRate = toWei("0.00015");
 
     // infrastructure
@@ -112,7 +112,7 @@ async function main(_, deployer, accounts) {
         governor.address, 0, "initial version"))
 
     printInfo("deploying preset2")
-    await preset3(deployer, accounts)
+    // await preset3(deployer, accounts)
     printInfo("deploying preset2 done")
 }
 
