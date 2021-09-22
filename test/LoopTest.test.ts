@@ -99,7 +99,7 @@ describe("LoopTest", () => {
         }
         await updatePrice(toWei("500"), toWei("500"), toWei("500"), toWei("500"))
 
-        for (let i = 0; i < 48; i++) {
+        for (let i = 0; i < 24; i++) {
             await perp.createPerpetual(oracle1.address,
                 [toWei("0.01"), toWei("0.005"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.002"), toWei("0.5"), toWei("0.5"), toWei("4")],
                 [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0"), toWei("5"), toWei("0.05"), toWei("0.01"), toWei("1")],
