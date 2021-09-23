@@ -102,7 +102,8 @@ async function preset3(deployer, accounts) {
         usd.address,
         18,
         Math.floor(Date.now() / 1000),
-        ethers.utils.defaultAbiCoder.encode(["bool", "int256"], [false, toWei("10000000")])
+        // (isFastCreationEnabled, insuranceFundCap, liquidityCap, addLiquidityDelay)
+        ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("10000000"), 0, 1])
     ))
 
     const n = await poolCreator.getLiquidityPoolCount();

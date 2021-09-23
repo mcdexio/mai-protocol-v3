@@ -301,8 +301,8 @@ async function set1(deployer, poolCreator, oracleAddresses) {
         eth.address,
         18,                             /* decimals */
         Math.floor(Date.now() / 1000),  /* nonce */
-        // (isFastCreationEnabled, insuranceFundCap)
-        ethers.utils.defaultAbiCoder.encode(["bool", "int256"], [true, toWei("1000")])
+        // (isFastCreationEnabled, insuranceFundCap, liquidityCap, addLiquidityDelay)
+        ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [true, toWei("10000000"), 0, 1])
     )).wait()
 
     const n = await poolCreator.getLiquidityPoolCount();
@@ -360,7 +360,7 @@ async function set2(deployer, poolCreator, oracleAddresses) {
         true,                           /* isFastCreationEnabled */
         Math.floor(Date.now() / 1000),  /* nonce */
         // (isFastCreationEnabled, insuranceFundCap)
-        ethers.utils.defaultAbiCoder.encode(["bool", "int256"], [true, toWei("1000000")])
+        ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [true, toWei("10000000"), 0, 1])
     )).wait()
 
     const n = await poolCreator.getLiquidityPoolCount();
