@@ -16,6 +16,8 @@ const ENV: DeploymentOptions = {
 }
 
 const oracleAddresses = {
+    "ETH - USD": "0xa04197E5F7971E7AEf78Cf5Ad2bC65aaC1a967Aa",
+    "BTC - USD": "0xcC8A884396a7B3a6e61591D5f8949076Ed0c7353",
 }
 
 const keeperAddresses = [
@@ -93,12 +95,12 @@ async function main(_, deployer, accounts) {
 }
 
 async function preset3(deployer, accounts) {
-    const usd = await deployer.getContractAt("CustomERC20", deployer.addressOf("USDC"))
+    const usd = await deployer.getContractAt("CustomERC20", deployer.addressOf("BUSD"))
     const poolCreator = await deployer.getDeployedContract("PoolCreator")
 
     await ensureFinished(poolCreator.createLiquidityPool(
         usd.address,
-        6,
+        18,
         Math.floor(Date.now() / 1000),
         ethers.utils.defaultAbiCoder.encode(["bool", "int256"], [false, toWei("10000000")])
     ))
@@ -113,7 +115,7 @@ async function preset3(deployer, accounts) {
         // imr                          mmr            operatorfr        lpfr              rebate        penalty        keeper       insur         oi
         [toWei("0.066666666666666666"), toWei("0.05"), toWei("0.00010"), toWei("0.00055"), toWei("0.2"), toWei("0.01"), toWei("10"), toWei("0.5"), toWei("3")],
         // alpha           beta1            beta2             frLimit        lev         maxClose       frFactor        defaultLev
-        [toWei("0.0004"), toWei("0.0185"), toWei("0.00525"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
+        [toWei("0.0004"), toWei("0.0185"), toWei("0.01295"), toWei("0.01"), toWei("1"), toWei("0.05"), toWei("0.005"), toWei("10")],
         [toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
         [toWei("0.1"), toWei("0.5"), toWei("0.5"), toWei("0.1"), toWei("5"), toWei("1"), toWei("0.1"), toWei("10000000")]
     ))
