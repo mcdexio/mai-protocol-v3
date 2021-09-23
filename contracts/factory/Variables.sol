@@ -110,6 +110,9 @@ contract Variables is Initializable, OwnableUpgradeable, IVariables {
      * @return  Address The address of the mcb token.
      */
     function getMCBToken() public pure override returns (address) {
-        return address(0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42);
+        // arb1
+        // return address(0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42);
+        // bsc
+        return address(0x5fE80d2CD054645b9419657d3d10d26391780A7B);
     }
 }
