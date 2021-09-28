@@ -41,7 +41,7 @@ function fromWei(n) { return hre.ethers.utils.formatEther(n); }
 async function main(_, deployer, accounts) {
     // BSC
     const upgradeAdmin = "0xd80c8fF02Ac8917891C47559d415aB513B44DCb6"
-    const vault = "0xE815dC14bCfAa6C6FBa912c108576A822CC51473"
+    const vault = "0xb6C33Bd07a83fF6A328C246a3CcCF6180d278Ba4"
     const vaultFeeRate = toWei("0.00015");
 
     // infrastructure
