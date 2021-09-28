@@ -17,7 +17,23 @@ const ENV: DeploymentOptions = {
   addressOverride: {},
 };
 
+async function getContractBlockNumber(deployer) {
+  let endBlock = await deployer.ethers.provider.getBlockNumber()
+  let beginBlock = endBlock
+  for (let i in deployer.deployedContracts) {
+    const deployedAt = deployer.deployedContracts[i].deployedAt
+    if (typeof deployedAt === 'number') {
+      beginBlock = Math.min(beginBlock, deployedAt)
+    }
+  }
+  return { beginBlock, endBlock }
+}
+
+const FILTER_LOG_STEP = 5000
+
 async function inspectPoolCreator(deployer) {
+  let { beginBlock, endBlock } = await getContractBlockNumber(deployer)
+
   console.log("====PoolCreator====");
   console.log("address(proxy):", await deployer.addressOf("PoolCreator"));
   const poolCreator = await deployer.getDeployedContract("PoolCreator");
@@ -32,20 +48,23 @@ async function inspectPoolCreator(deployer) {
   const keepers = await poolCreator.listKeepers(0, 100);
   console.log("whitelist keepers:", keepers);
   console.log("guardian:");
-  var filter = poolCreator.filters.AddGuardian();
-  var logs = await poolCreator.queryFilter(filter);
-  for (const log of logs) {
-    console.log("    add ", log.args[0]);
-  }
-  filter = poolCreator.filters.TransferGuardian();
-  logs = await poolCreator.queryFilter(filter);
-  for (const log of logs) {
-    console.log("    transfer from ", log.args[0], " to ", log.args[0]);
-  }
-  filter = poolCreator.filters.RenounceGuardian();
-  logs = await poolCreator.queryFilter(filter);
-  for (const log of logs) {
-    console.log("    renounce ", log.args[0]);
+  for (let i = beginBlock; i < endBlock; i += FILTER_LOG_STEP + 1) {
+    let j = Math.min(i + FILTER_LOG_STEP, endBlock);
+    var filter = poolCreator.filters.AddGuardian();
+    var logs = await poolCreator.queryFilter(filter, i, j);
+    for (const log of logs) {
+      console.log("    add ", log.args[0]);
+    }
+    filter = poolCreator.filters.TransferGuardian();
+    logs = await poolCreator.queryFilter(filter, i, j);
+    for (const log of logs) {
+      console.log("    transfer from ", log.args[0], " to ", log.args[0]);
+    }
+    filter = poolCreator.filters.RenounceGuardian();
+    logs = await poolCreator.queryFilter(filter, i, j);
+    for (const log of logs) {
+      console.log("    renounce ", log.args[0]);
+    }
   }
   const vault = await poolCreator.getVault();
   const vaultFeeRate = await poolCreator.getVaultFeeRate();
@@ -59,15 +78,18 @@ async function inspectPoolCreator(deployer) {
   owner = await symbolService.owner();
   console.log("owner:", owner);
   console.log("whitelist factory:");
-  filter = symbolService.filters.AddWhitelistedFactory();
-  logs = await symbolService.queryFilter(filter);
-  for (const log of logs) {
-    console.log("    add ", log.args[0]);
-  }
-  filter = symbolService.filters.RemoveWhitelistedFactory();
-  logs = await symbolService.queryFilter(filter);
-  for (const log of logs) {
-    console.log("    remove ", log.args[0]);
+  for (let i = beginBlock; i < endBlock; i += FILTER_LOG_STEP) {
+    let j = Math.min(i + FILTER_LOG_STEP, endBlock);
+    filter = symbolService.filters.AddWhitelistedFactory();
+    logs = await symbolService.queryFilter(filter, i, j);
+    for (const log of logs) {
+      console.log("    add ", log.args[0]);
+    }
+    filter = symbolService.filters.RemoveWhitelistedFactory();
+    logs = await symbolService.queryFilter(filter, i, j);
+    for (const log of logs) {
+      console.log("    remove ", log.args[0]);
+    }
   }
 
   console.log("\n====MCDEXFoundation pool====");
