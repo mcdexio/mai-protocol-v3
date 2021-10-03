@@ -513,8 +513,8 @@ library LiquidityPoolModule {
     function refundDonatedInsuranceFund(LiquidityPoolStorage storage liquidityPool) internal {
         address operator = getOperator(liquidityPool);
         if (liquidityPool.donatedInsuranceFund > 0 && operator != address(0)) {
-            liquidityPool.transferToUser(operator, liquidityPool.donatedInsuranceFund);
             liquidityPool.donatedInsuranceFund = 0;
+            liquidityPool.transferToUser(operator, liquidityPool.donatedInsuranceFund);
         }
     }
 
