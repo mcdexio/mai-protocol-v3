@@ -91,7 +91,18 @@ contract LibraryEvents {
         int256 penalty,
         int256 penaltyToLP
     );
-    event TransferFeeToOperator(address indexed operator, int256 operatorFee);
+    event TransferFeeToVault(
+        uint256 perpetualIndex,
+        address indexed trader,
+        address indexed vault,
+        int256 vaultFee
+    );
+    event TransferFeeToOperator(
+        uint256 perpetualIndex,
+        address indexed trader,
+        address indexed operator,
+        int256 operatorFee
+    );
     event TransferFeeToReferrer(
         uint256 perpetualIndex,
         address indexed trader,

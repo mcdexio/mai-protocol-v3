@@ -47,7 +47,18 @@ library TradeModule {
         int256 penalty,
         int256 penaltyToLP
     );
-    event TransferFeeToOperator(address indexed operator, int256 operatorFee);
+    event TransferFeeToVault(
+        uint256 perpetualIndex,
+        address indexed trader,
+        address indexed vault,
+        int256 vaultFee
+    );
+    event TransferFeeToOperator(
+        uint256 perpetualIndex,
+        address indexed trader,
+        address indexed operator,
+        int256 operatorFee
+    );
     event TransferFeeToReferrer(
         uint256 perpetualIndex,
         address indexed trader,
@@ -310,11 +321,16 @@ library TradeModule {
     ) internal {
         PerpetualStorage storage perpetual = liquidityPool.perpetuals[perpetualIndex];
         perpetual.updateCash(address(this), lpFee);
-        liquidityPool.transferFromPerpetualToUser(perpetual.id, referrer, referralRebate);
-        liquidityPool.transferFromPerpetualToUser(perpetual.id, liquidityPool.getVault(), vaultFee);
+
+        address vault = liquidityPool.getVault();
+        liquidityPool.transferFromPerpetualToUser(perpetual.id, vault, vaultFee);
+        emit TransferFeeToVault(perpetual.id, trader, vault, vaultFee);
+
         address operator = liquidityPool.getOperator();
         liquidityPool.transferFromPerpetualToUser(perpetual.id, operator, operatorFee);
-        emit TransferFeeToOperator(operator, operatorFee);
+        emit TransferFeeToOperator(perpetual.id, trader, operator, operatorFee);
+
+        liquidityPool.transferFromPerpetualToUser(perpetual.id, referrer, referralRebate);
         emit TransferFeeToReferrer(perpetual.id, trader, referrer, referralRebate);
     }
 
