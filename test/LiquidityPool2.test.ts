@@ -75,7 +75,7 @@ describe('LiquidityPool2', () => {
             oracle1.address,
             // imr       mmr         operatorfr       lpfr             rebate      penalty         keeper      insur       oi
             [toWei("1"), toWei("1"), toWei("0.0001"), toWei("0.0007"), toWei("0"), toWei("0.005"), toWei("1"), toWei("0"), toWei("1")],
-            [toWei("0.001"), toWei("1"), toWei("0.9"), toWei("5"), toWei("0.5"), toWei('0.2'), toWei("0.01"), toWei("1")],
+            [toWei("0.001"), toWei("1"), toWei("0.9"), toWei("5"), toWei("0.5"), toWei('0.2'), toWei("0.01"), toWei("1"), toWei("0")],
         )
         oracle2 = await createContract("OracleAdaptor", ["ctk", "ctk"]);
         await oracle2.setIndexPrice(toWei('100'), now);
@@ -84,7 +84,7 @@ describe('LiquidityPool2', () => {
             oracle2.address,
             // imr       mmr         operatorfr       lpfr             rebate      penalty         keeper      insur       oi
             [toWei("1"), toWei("1"), toWei("0.0001"), toWei("0.0007"), toWei("0"), toWei("0.005"), toWei("1"), toWei("0"), toWei("1")],
-            [toWei("0.001"), toWei("1"), toWei("0.9"), toWei("5"), toWei("0.5"), toWei('0.2'), toWei("0.01"), toWei("1")],
+            [toWei("0.001"), toWei("1"), toWei("0.9"), toWei("5"), toWei("0.5"), toWei('0.2'), toWei("0.01"), toWei("1"), toWei("0")],
         )
         await liquidityPool.setState(0, 2);
         await liquidityPool.setState(1, 2);

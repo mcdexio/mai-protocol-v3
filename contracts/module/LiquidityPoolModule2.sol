@@ -50,7 +50,7 @@ library LiquidityPoolModule2 {
         address oracle,
         address collateral,
         int256[9] baseParams,
-        int256[8] riskParams
+        int256[9] riskParams
     );
     event RunLiquidityPool();
     event AddAMMKeeper(uint256 perpetualIndex, address indexed keeper);
@@ -73,9 +73,9 @@ library LiquidityPoolModule2 {
         LiquidityPoolStorage storage liquidityPool,
         address oracle,
         int256[9] calldata baseParams,
-        int256[8] calldata riskParams,
-        int256[8] calldata minRiskParamValues,
-        int256[8] calldata maxRiskParamValues
+        int256[9] calldata riskParams,
+        int256[9] calldata minRiskParamValues,
+        int256[9] calldata maxRiskParamValues
     ) public {
         require(
             liquidityPool.perpetualCount < MAX_PERPETUAL_COUNT,
@@ -260,9 +260,9 @@ library LiquidityPoolModule2 {
     function setPerpetualRiskParameter(
         LiquidityPoolStorage storage liquidityPool,
         uint256 perpetualIndex,
-        int256[8] memory riskParams,
-        int256[8] memory minRiskParamValues,
-        int256[8] memory maxRiskParamValues
+        int256[9] memory riskParams,
+        int256[9] memory minRiskParamValues,
+        int256[9] memory maxRiskParamValues
     ) public {
         require(perpetualIndex < liquidityPool.perpetualCount, "perpetual index out of range");
         PerpetualStorage storage perpetual = liquidityPool.perpetuals[perpetualIndex];
@@ -278,7 +278,7 @@ library LiquidityPoolModule2 {
     function updatePerpetualRiskParameter(
         LiquidityPoolStorage storage liquidityPool,
         uint256 perpetualIndex,
-        int256[8] memory riskParams
+        int256[9] memory riskParams
     ) public {
         require(perpetualIndex < liquidityPool.perpetualCount, "perpetual index out of range");
         PerpetualStorage storage perpetual = liquidityPool.perpetuals[perpetualIndex];

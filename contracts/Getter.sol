@@ -145,7 +145,8 @@ contract Getter is Storage, ILiquidityPoolGetter {
             // [32] maxOpenInterestRate,
             // [33-35] fundingRateFactor value, min, max,
             // [36-38] defaultTargetLeverage value, min, max,
-            int256[39] memory nums
+            // [39-41] baseFundingRate value, min, max,
+            int256[42] memory nums
         )
     {
         PerpetualStorage storage perpetual = _liquidityPool.perpetuals[perpetualIndex];
@@ -194,7 +195,11 @@ contract Getter is Storage, ILiquidityPoolGetter {
             perpetual.fundingRateFactor.maxValue,
             perpetual.defaultTargetLeverage.value,
             perpetual.defaultTargetLeverage.minValue,
-            perpetual.defaultTargetLeverage.maxValue
+            perpetual.defaultTargetLeverage.maxValue,
+            perpetual.baseFundingRate.value,
+            // [40]
+            perpetual.baseFundingRate.minValue,
+            perpetual.baseFundingRate.maxValue
         ];
     }
 

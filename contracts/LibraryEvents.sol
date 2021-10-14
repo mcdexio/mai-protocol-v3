@@ -19,11 +19,11 @@ contract LibraryEvents {
     event SetPerpetualBaseParameter(uint256 perpetualIndex, int256[9] baseParams);
     event SetPerpetualRiskParameter(
         uint256 perpetualIndex,
-        int256[8] riskParams,
-        int256[8] minRiskParamValues,
-        int256[8] maxRiskParamValues
+        int256[9] riskParams,
+        int256[9] minRiskParamValues,
+        int256[9] maxRiskParamValues
     );
-    event UpdatePerpetualRiskParameter(uint256 perpetualIndex, int256[8] riskParams);
+    event UpdatePerpetualRiskParameter(uint256 perpetualIndex, int256[9] riskParams);
     event SetOracle(uint256 perpetualIndex, address indexed oldOracle, address indexed newOracle);
     event UpdatePrice(
         uint256 perpetualIndex,
@@ -61,7 +61,7 @@ contract LibraryEvents {
         address oracle,
         address collateral,
         int256[9] baseParams,
-        int256[8] riskParams
+        int256[9] riskParams
     );
     event RunLiquidityPool();
     event OperatorCheckIn(address indexed operator);

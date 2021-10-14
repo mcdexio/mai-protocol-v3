@@ -46,9 +46,9 @@ describe('Governance', () => {
         await governance.initializeParameters(
             oracle.address,
             [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
-            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         )
         creator = await createContract("TestTracer");
         await governance.setCreator(creator.address);
@@ -201,9 +201,9 @@ describe('Governance', () => {
             await governance.initializeParameters(
                 oracle.address,
                 [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
-                [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-                [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-                [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+                [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+                [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+                [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
             )
 
             const alterOracle = await createContract("OracleAdaptor", ["A", "B"])
@@ -249,9 +249,9 @@ describe('Governance', () => {
         await governance.initializeParameters(
             oracle.address,
             [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
-            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         )
 
         const alterOracle = await createContract("OracleAdaptor", ["A", "B"])
@@ -296,9 +296,9 @@ describe('Governance', () => {
         await governance.initializeParameters(
             oracle.address,
             [toWei("0.1"), toWei("0.05"), toWei("0.001"), toWei("0.001"), toWei("0.2"), toWei("0.02"), toWei("0.00000002"), toWei("0.5"), toWei("1")],
-            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.01"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         )
         const alterOracle = await createContract("OracleAdaptor", ["A", "B"])
         var now = Math.floor(Date.now() / 1000);
@@ -551,7 +551,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])
         expect(await governance.halfSpread(0)).to.equal(toWei("0.5"));
         expect(await governance.openSlippageFactor(0)).to.equal(toWei("0.6"));
@@ -565,21 +566,21 @@ describe('Governance', () => {
     it('setPerpetualRiskParameter', async () => {
         await governance.setGovernor(user0.address);
         await governance.setPerpetualRiskParameter(0,
-            [toWei("0.05"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.05"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         );
         expect(await governance.halfSpread(0)).to.equal(toWei("0.05"));
 
         await expect(governance.setPerpetualRiskParameter(0,
-            [toWei("0.99"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.99"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         )).to.be.revertedWith("value out of range");
         await expect(governance.setPerpetualRiskParameter(0,
-            [toWei("0.009"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1")],
-            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
-            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1")],
+            [toWei("0.009"), toWei("0.1"), toWei("0.06"), toWei("0.1"), toWei("5"), toWei("0.2"), toWei("0.04"), toWei("1"), toWei("0")],
+            [toWei("0.01"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0"), toWei("0")],
+            [toWei("0.9"), toWei("1"), toWei("1"), toWei("1"), toWei("10"), toWei("1"), toWei("1"), toWei("1"), toWei("0")],
         )).to.be.revertedWith("value out of range");
     })
 
@@ -594,7 +595,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("halfSpread < 0");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("1"),
@@ -604,7 +606,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("halfSpread >= 100%");
 
         await expect(governance.updatePerpetualRiskParameter(0, [
@@ -615,7 +618,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("openSlippageFactor < 0");
 
         await expect(governance.updatePerpetualRiskParameter(0, [
@@ -626,7 +630,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("closeSlippageFactor < 0");
 
         await expect(governance.updatePerpetualRiskParameter(0, [
@@ -637,7 +642,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("closeSlippageFactor > openSlippageFactor");
 
         await expect(governance.updatePerpetualRiskParameter(0, [
@@ -648,7 +654,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("fundingRateLimit < 0");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.5"),
@@ -658,7 +665,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("-0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("fundingRateFactor < 0");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.5"),
@@ -668,7 +676,8 @@ describe('Governance', () => {
             toWei("-5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("ammMaxLeverage < 0");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.5"),
@@ -678,7 +687,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("-0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("maxClosePriceDiscount < 0");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.5"),
@@ -688,7 +698,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("1"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("maxClosePriceDiscount >= 100%");
     })
 
@@ -702,7 +713,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("operator is allowed");
 
         await governance.setOperatorNoAuth(user0.address);
@@ -714,7 +726,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ]);
         await governance.updatePerpetualRiskParameter(0, [
             toWei("0.9"),
@@ -724,7 +737,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ]);
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.99"),
@@ -734,7 +748,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("value out of range");
         await expect(governance.updatePerpetualRiskParameter(0, [
             toWei("0.001"),
@@ -744,7 +759,8 @@ describe('Governance', () => {
             toWei("5"),
             toWei("0.05"),
             toWei("0.04"),
-            toWei("1")
+            toWei("1"),
+            toWei("0")
         ])).to.be.revertedWith("value out of range");
     })
 

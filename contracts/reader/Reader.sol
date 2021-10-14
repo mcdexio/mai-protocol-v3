@@ -39,7 +39,7 @@ contract Reader {
         PerpetualState state;
         address oracle;
         // check Getter.sol for detail
-        int256[39] nums;
+        int256[42] nums;
         uint256 symbol; // minimum number in the symbol service
         string underlyingAsset;
         bool isMarketClosed;
@@ -412,7 +412,7 @@ contract Reader {
             isSynced = false;
         }
         result = new AccountsResult[](accounts.length);
-        int256[39] memory nums;
+        int256[42] memory nums;
         (, , nums) = ILiquidityPoolFull(liquidityPool).getPerpetualInfo(perpetualIndex);
         int256 unitAccumulativeFunding = nums[4];
         for (uint256 i = 0; i < accounts.length; i++) {

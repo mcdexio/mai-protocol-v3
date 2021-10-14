@@ -18,7 +18,7 @@ interface ILiquidityPool {
 
     function setOracle(uint256 perpetualIndex, address oracle) external;
 
-    function updatePerpetualRiskParameter(uint256 perpetualIndex, int256[8] calldata riskParams)
+    function updatePerpetualRiskParameter(uint256 perpetualIndex, int256[9] calldata riskParams)
         external;
 
     function addAMMKeeper(uint256 perpetualIndex, address keeper) external;
@@ -28,9 +28,9 @@ interface ILiquidityPool {
     function createPerpetual(
         address oracle,
         int256[9] calldata baseParams,
-        int256[8] calldata riskParams,
-        int256[8] calldata minRiskParamValues,
-        int256[8] calldata maxRiskParamValues
+        int256[9] calldata riskParams,
+        int256[9] calldata minRiskParamValues,
+        int256[9] calldata maxRiskParamValues
     ) external;
 
     function runLiquidityPool() external;
@@ -113,7 +113,7 @@ contract OperatorProxy is Initializable, ReentrancyGuardUpgradeable {
     function updatePerpetualRiskParameter(
         address liquidityPool,
         uint256 perpetualIndex,
-        int256[8] calldata riskParams
+        int256[9] calldata riskParams
     ) external onlyOperatorAdmin {
         ILiquidityPool(liquidityPool).updatePerpetualRiskParameter(perpetualIndex, riskParams);
     }
@@ -138,9 +138,9 @@ contract OperatorProxy is Initializable, ReentrancyGuardUpgradeable {
         address liquidityPool,
         address oracle,
         int256[9] calldata baseParams,
-        int256[8] calldata riskParams,
-        int256[8] calldata minRiskParamValues,
-        int256[8] calldata maxRiskParamValues
+        int256[9] calldata riskParams,
+        int256[9] calldata minRiskParamValues,
+        int256[9] calldata maxRiskParamValues
     ) external onlyOperatorAdmin {
         ILiquidityPool(liquidityPool).createPerpetual(
             oracle,

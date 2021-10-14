@@ -6,16 +6,16 @@ function printNumberArray(arr) {
 }
 
 const OperatorProxy = new ethers.utils.Interface([
-  'function updatePerpetualRiskParameter(address liquidityPool, uint256 perpetualIndex, int256[8] calldata riskParams)',
+  'function updatePerpetualRiskParameter(address liquidityPool, uint256 perpetualIndex, int256[9] calldata riskParams)',
   'function propose(address liquidityPool, string[] calldata signatures, bytes[] calldata calldatas, string calldata description) external returns (uint256)',
   'function proposeToUpgradeAndCall(address liquidityPool, bytes32 targetVersionKey, bytes calldata dataForLiquidityPool, bytes calldata dataForGovernor, string calldata description) external returns (uint256)',
-  'function createPerpetual(address liquidityPool, address oracle, int256[9] calldata baseParams, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)',
+  'function createPerpetual(address liquidityPool, address oracle, int256[9] calldata baseParams, int256[9] calldata riskParams, int256[9] calldata minRiskParamValues, int256[9] calldata maxRiskParamValues)',
 ])
 const LiquidityPool = new ethers.utils.Interface([
-  'function createPerpetual(address oracle, int256[9] calldata baseParams, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)',
+  'function createPerpetual(address oracle, int256[9] calldata baseParams, int256[9] calldata riskParams, int256[9] calldata minRiskParamValues, int256[9] calldata maxRiskParamValues)',
   'function propose(string[] calldata signatures, bytes[] calldata calldatas, string calldata description)',
   'function setPerpetualBaseParameter(uint256 perpetualIndex, int256[9] calldata baseParams)',
-  'function setPerpetualRiskParameter(uint256 perpetualIndex, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)',
+  'function setPerpetualRiskParameter(uint256 perpetualIndex, int256[9] calldata riskParams, int256[9] calldata minRiskParamValues, int256[9] calldata maxRiskParamValues)',
 ])
 
 // ===============================================================================================
@@ -40,7 +40,7 @@ const LiquidityPool = new ethers.utils.Interface([
 //     '0x80918a9bb46bc1c2a03d3a9e09432ef4ee0bb048', // test pool 2
 //     [
 //       // signatures
-//       "createPerpetual(address,int256[9],int256[8],int256[8],int256[8])",
+//       "createPerpetual(address,int256[9],int256[9],int256[9],int256[9])",
 //     ],
 //     // calldatas
 //     [
@@ -96,7 +96,7 @@ const LiquidityPool = new ethers.utils.Interface([
 //     [
 //       // signatures
 //       "setPerpetualBaseParameter(uint256,int256[9])",
-//       "setPerpetualRiskParameter(uint256,int256[8],int256[8],int256[8])",
+//       "setPerpetualRiskParameter(uint256,int256[9],int256[9],int256[9])",
 //     ],
 //     // calldatas
 //     [

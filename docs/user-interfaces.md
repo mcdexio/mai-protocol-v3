@@ -9,7 +9,7 @@ initialize(address operator, address collateral, uint256 collateralDecimals, add
 Initialize the liquidity pool and set up its configuration.
 
 ```solidity
-createPerpetual(address oracle, int256[10] calldata baseParams, int256[8] calldata riskParams, int256[8] calldata minRiskParamValues, int256[8] calldata maxRiskParamValues)
+createPerpetual(address oracle, int256[9] calldata baseParams, int256[9] calldata riskParams, int256[9] calldata minRiskParamValues, int256[9] calldata maxRiskParamValues)
 ```
 
 Create a new perpetual of the liquidity pool. The perpetual's collateral must be the same with the liquidity pool's collateral.

@@ -78,9 +78,9 @@ contract LiquidityPool is Storage, Perpetual, Proxy, LibraryEvents, ILiquidityPo
     function createPerpetual(
         address oracle,
         int256[9] calldata baseParams,
-        int256[8] calldata riskParams,
-        int256[8] calldata minRiskParamValues,
-        int256[8] calldata maxRiskParamValues
+        int256[9] calldata riskParams,
+        int256[9] calldata minRiskParamValues,
+        int256[9] calldata maxRiskParamValues
     ) external onlyNotUniverseSettled {
         if (!_liquidityPool.isRunning || _liquidityPool.isFastCreationEnabled) {
             require(
