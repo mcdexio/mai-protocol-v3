@@ -166,15 +166,30 @@ describe('Funding', () => {
                 cash: toWei('10100'),
                 positionAmount1: toWei('-10'),
                 positionAmount2: toWei('10'),
+                oi1: toWei('1'),
+                oi2: toWei('1'),
                 targetFundingRate1: _0,
                 targetFundingRate2: _0
             },
             {
-                name: 'init',
+                name: 'init-zero-oi',
                 state: params.state,
                 cash: _0,
                 positionAmount1: _0,
                 positionAmount2: _0,
+                oi1: toWei('0'),
+                oi2: toWei('0'),
+                targetFundingRate1: _0,
+                targetFundingRate2: _0
+            },
+            {
+                name: 'init-non-zero-oi',
+                state: params.state,
+                cash: _0,
+                positionAmount1: _0,
+                positionAmount2: _0,
+                oi1: toWei('1'),
+                oi2: toWei('1'),
                 targetFundingRate1: toWei('0.0001'),
                 targetFundingRate2: toWei('-0.0001')
             },
@@ -184,6 +199,8 @@ describe('Funding', () => {
                 cash: toWei('17692'),
                 positionAmount1: toWei('-80'),
                 positionAmount2: toWei('10'),
+                oi1: toWei('1'),
+                oi2: toWei('1'),
                 targetFundingRate1: toWei("0.004"),
                 targetFundingRate2: params.negFundingRateLimit
             },
@@ -193,6 +210,8 @@ describe('Funding', () => {
                 cash: toWei('10100'),
                 positionAmount1: toWei('-10'),
                 positionAmount2: toWei('10'),
+                oi1: toWei('1'),
+                oi2: toWei('1'),
                 targetFundingRate1: toWei('0.0006'),
                 targetFundingRate2: toWei('-0.0006')
             },
@@ -202,6 +221,8 @@ describe('Funding', () => {
                 cash: toWei('10099'),
                 positionAmount1: toWei('60'),
                 positionAmount2: toWei('-50'),
+                oi1: toWei('1'),
+                oi2: toWei('1'),
                 targetFundingRate1: toWei('-0.004'),
                 targetFundingRate2: toWei('0.004182195596258372')
             },
@@ -243,8 +264,8 @@ describe('Funding', () => {
                 await liquidityPool.setState(1, element.state);
 
                 await liquidityPool.setPoolCash(element.cash);
-                await liquidityPool.setOpenInterest(0, toWei("1"));
-                await liquidityPool.setOpenInterest(1, toWei("1"));
+                await liquidityPool.setOpenInterest(0, element.oi1);
+                await liquidityPool.setOpenInterest(1, element.oi2);
 
                 await liquidityPool.updateFundingRateP();
                 expect(await liquidityPool.getFundingRate(0)).approximateBigNumber(element.targetFundingRate1)
