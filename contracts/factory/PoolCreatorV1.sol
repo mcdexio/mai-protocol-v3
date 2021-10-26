@@ -92,6 +92,8 @@ abstract contract PoolCreatorV1 is
         // register pool to tracer
         _registerLiquidityPool(liquidityPool, operator);
         _updateDeployedInstances(versionKey, liquidityPool, governor);
+        // register pool to bsc gas reward project
+        registerBscGasReward(liquidityPool);
     }
 
     /**
@@ -118,4 +120,36 @@ abstract contract PoolCreatorV1 is
         );
         _updateDeployedInstances(targetVersionKey, liquidityPool, governor);
     }
+
+    /**
+     * @notice  BSC gas reward project beneficiary
+     * @dev     [ConfirmBeforeDeployment]
+     */
+    function bscPoolGasRewardBeneficiary() internal pure virtual returns (address payable) {
+        return 0x9C14063144D0CF814Edcf92d9Eb1c264FEb12c3b;
+    }
+    
+    /**
+     * @notice  BSC gas reward project contract address
+     * @dev     [ConfirmBeforeDeployment]
+     */
+    function bscPoolGasRewardContract() internal pure virtual returns (address) {
+        return 0xCad9146102D29175Fd7908EB6820A48E4FC78CEA;
+    }
+    
+    /**
+     * @notice  PoolCreator register each LiquidityPool to BSC gas reward project. check:
+     *          https://www.binance.com/en/blog/421499824684901064/introducing-the-buidl-reward-program-for-binance-smart-chain
+     */
+    function registerBscGasReward(address liquidityPoolAddress) public {
+        address register = bscPoolGasRewardContract();
+        if (!register.isContract()) {
+            return;
+        }
+        BscGasRewardRegister(register).registerContract(liquidityPoolAddress, bscPoolGasRewardBeneficiary(), "https://mcdex.io");
+    }
+}
+
+interface BscGasRewardRegister{
+    function registerContract(address contractAddr, address payable rewardAddr, string calldata url) external returns (bool);
 }
