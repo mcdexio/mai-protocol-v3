@@ -735,6 +735,7 @@ library LiquidityPoolModule {
             IAccessControl(liquidityPool.accessController).isGranted(trader, grantee, privilege);
     }
 
+    // deprecated
     function setTargetLeverage(
         LiquidityPoolStorage storage liquidityPool,
         uint256 perpetualIndex,

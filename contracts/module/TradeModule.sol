@@ -225,7 +225,8 @@ library TradeModule {
                 trader,
                 deltaPosition.neg(),
                 deltaCash.neg(),
-                totalFee
+                totalFee,
+                flags
             );
         }
         // send fee
@@ -565,7 +566,8 @@ library TradeModule {
         address trader,
         int256 deltaPosition,
         int256 deltaCash,
-        int256 totalFee
+        int256 totalFee,
+        uint32 flags
     ) public {
         PerpetualStorage storage perpetual = liquidityPool.perpetuals[perpetualIndex];
         // read perp
@@ -593,7 +595,8 @@ library TradeModule {
                 deltaCash,
                 closePosition,
                 openPosition,
-                totalFee
+                totalFee,
+                flags
             );
         }
         // real deposit/withdraw
@@ -642,14 +645,20 @@ library TradeModule {
         int256 deltaCash,
         int256 closePosition,
         int256 openPosition,
-        int256 totalFee
+        int256 totalFee,
+        uint32 flags
     ) public view returns (int256 adjustCollateral) {
         int256 markPrice = perpetual.getMarkPrice();
         int256 oldMargin = perpetual.getMargin(trader, markPrice);
-        int256 leverage = perpetual.getTargetLeverage(trader);
-        require(leverage > 0, "target leverage = 0");
-        // openPositionMargin
-        adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
+        {
+            require(leverage > 0, "target leverage = 0");
+            int256 leverage = perpetual.getTargetLeverageWithFlags(trader, flags);
+            // openPositionMargin
+            require(leverage > 0, "target leverage = 0");
+            adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
+            // openPositionMargin
+            adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
+        }
         if (perpetual.getPosition(trader).sub(deltaPosition) != 0 && closePosition == 0) {
             // open from non-zero position
             // adjustCollateral = openPositionMargin + fee - pnl
@@ -797,7 +806,8 @@ library TradeModule {
                 account,
                 deltaPosition.neg(),
                 deltaCash.neg(),
-                totalFee
+                totalFee,
+                flags
             );
         }
         account.cash = account.cash.add(adjustCollateral);
@@ -890,7 +900,8 @@ library TradeModule {
         MarginAccount memory trader,
         int256 deltaPosition,
         int256 deltaCash,
-        int256 totalFee
+        int256 totalFee,
+        uint32 flags
     ) public view returns (int256 adjustCollateral) {
         // read perp
         (int256 closePosition, int256 openPosition) = Utils.splitAmount(
@@ -915,7 +926,8 @@ library TradeModule {
                 deltaCash,
                 closePosition,
                 openPosition,
-                totalFee
+                totalFee,
+                flags
             );
         }
     }
@@ -959,13 +971,22 @@ library TradeModule {
         int256 deltaCash,
         int256 closePosition,
         int256 openPosition,
-        int256 totalFee
+        int256 totalFee,
+        uint32 flags
     ) public view returns (int256 adjustCollateral) {
         int256 markPrice = perpetual.getMarkPrice();
         int256 oldMargin = readonlyGetMargin(perpetual, trader, markPrice);
-        // was perpetual.getTargetLeverage
-        int256 leverage = trader.targetLeverage;
+        // was perpetual.getTargetLeverageWithFlags
+        int256 leverage;
         {
+            bool _oldUseTargetLeverage = flags.oldUseTargetLeverage();
+            bool _newUseTargetLeverage = flags.newUseTargetLeverage();
+            require(!(_oldUseTargetLeverage && _newUseTargetLeverage), "invalid flags");
+            if (_oldUseTargetLeverage) {
+                leverage = trader.targetLeverage;
+            } else {
+                leverage = flags.newGetTargetLeverage();
+            }
             require(perpetual.initialMarginRate != 0, "initialMarginRate is not set");
             int256 maxLeverage = Constant.SIGNED_ONE.wdiv(perpetual.initialMarginRate);
             leverage = leverage == 0 ? perpetual.defaultTargetLeverage.value : leverage;

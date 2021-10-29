@@ -27,6 +27,7 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
     using LiquidityPoolModule2 for LiquidityPoolStorage;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
+    // deprecated
     function setTargetLeverage(
         uint256 perpetualIndex,
         address trader,
@@ -161,10 +162,13 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
      *          It will be treat as opening position.
      *
      *          Flags is a 32 bit uint value which indicates: (from highest bit)
-     *            - close only      only close position during trading;
-     *            - market order    do not check limit price during trading;
-     *            - stop loss       only available in brokerTrade mode;
-     *            - take profit     only available in brokerTrade mode;
+     *            1-5 bit
+     *            - close only          only close position during trading;
+     *            - market order        do not check limit price during trading;
+     *            - stop loss           only available in brokerTrade mode;
+     *            - take profit         only available in brokerTrade mode;
+     *            - use target leverage deprecated;
+     *            6-25 bit : target leverage, 2 decimals. Example: 599 means 5.99
      *          For stop loss and take profit, see `validateTriggerPrice` in OrderModule.sol for details.
      *
      * @param   perpetualIndex  The index of the perpetual in liquidity pool.

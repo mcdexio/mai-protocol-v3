@@ -103,8 +103,23 @@ library OrderData {
         return (flags & MASK_TAKE_PROFIT_ORDER) > 0;
     }
 
-    function useTargetLeverage(uint32 flags) internal pure returns (bool) {
+    function oldUseTargetLeverage(uint32 flags) internal pure returns (bool) {
         return (flags & MASK_USE_TARGET_LEVERAGE) > 0;
+    }
+
+    function newUseTargetLeverage(uint32 flags) internal pure returns (bool) {
+        return getTargetLeverageByFlags(flags) > 0;
+    }
+
+    function getTargetLeverageByFlags(uint32 flags) internal pure returns (int256) {
+        return int256((flags >> 7) & 0xfffff) * 10**16;
+    }
+
+    function useTargetLeverage(uint32 flags) internal pure returns (bool) {
+        bool _oldUseTargetLeverage = oldUseTargetLeverage(flags);
+        bool _newUseTargetLeverage = newUseTargetLeverage(flags);
+        require(!(_oldUseTargetLeverage && _newUseTargetLeverage), "invalid flags");
+        return _oldUseTargetLeverage || _newUseTargetLeverage;
     }
 
     /*

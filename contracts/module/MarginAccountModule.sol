@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 
 import "../libraries/SafeMathExt.sol";
 import "../libraries/Utils.sol";
+import "../libraries/OrderData.sol";
 
 import "../Type.sol";
 
@@ -13,6 +14,7 @@ library MarginAccountModule {
     using SafeMathExt for int256;
     using SafeCastUpgradeable for uint256;
     using SignedSafeMathUpgradeable for int256;
+    using OrderData for uint32;
 
     /**
      * @dev Get the initial margin of the trader in the perpetual.
@@ -272,6 +274,7 @@ library MarginAccountModule {
         account.position = 0;
     }
 
+    // deprecated
     function setTargetLeverage(
         PerpetualStorage storage perpetual,
         address trader,
@@ -292,5 +295,26 @@ library MarginAccountModule {
             ? perpetual.defaultTargetLeverage.value
             : targetLeverage;
         return targetLeverage.min(maxLeverage);
+    }
+
+    function getTargetLeverageWithFlags(
+        PerpetualStorage storage perpetual,
+        address trader,
+        uint32 flags
+    ) internal view returns (int256 targetLeverage) {
+        require(perpetual.initialMarginRate != 0, "initialMarginRate is not set");
+        int256 maxLeverage = Constant.SIGNED_ONE.wdiv(perpetual.initialMarginRate);
+        bool _oldUseTargetLeverage = flags.oldUseTargetLeverage();
+        bool _newUseTargetLeverage = flags.newUseTargetLeverage();
+        require(!(_oldUseTargetLeverage && _newUseTargetLeverage), "invalid flags");
+        if (_oldUseTargetLeverage) {
+            targetLeverage = perpetual.marginAccounts[trader].targetLeverage;
+        } else {
+            targetLeverage = flags.getTargetLeverageByFlags();
+        }
+        targetLeverage = targetLeverage == 0
+            ? perpetual.defaultTargetLeverage.value
+            : targetLeverage;
+        targetLeverage = targetLeverage.min(maxLeverage);
     }
 }

@@ -8,7 +8,6 @@ import "../interface/ILiquidityPoolFull.sol";
 import "../interface/IPoolCreatorFull.sol";
 import "../interface/IOracle.sol";
 import "../interface/ISymbolService.sol";
-import "../interface/ISymbolService.sol";
 import "../libraries/SafeMathExt.sol";
 import "../libraries/Constant.sol";
 
