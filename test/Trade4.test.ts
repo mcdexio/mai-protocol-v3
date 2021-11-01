@@ -81,7 +81,7 @@ describe('TradeModule4 - auto deposit/withdraw with targetLeverage', () => {
             await testTrade.setState(0, 2);
         })
 
-        it("regular - 1x", async () => {
+        it("old regular - 1x", async () => {
             let now = Math.floor(Date.now() / 1000);
             await testTrade.updatePrice(now);
 
@@ -102,6 +102,32 @@ describe('TradeModule4 - auto deposit/withdraw with targetLeverage', () => {
             expect(cash).approximateBigNumber(toWei("1"))
             expect(position).to.equal(toWei("1"))
             expect(await ctk.balanceOf(user1.address)).approximateBigNumber(toWei("8998"))
+        })
+
+        it("new regular - 1x", async () => {
+            let now = Math.floor(Date.now() / 1000);
+            await testTrade.updatePrice(now);
+
+            await mocker.setPrice(toWei("1000"));
+
+            await ctk.mint(user1.address, toWei("10000"));
+            await ctk.connect(user1).approve(testTrade.address, toWei("10000"))
+
+            await ctk.mint(testTrade.address, toWei("1000"));
+            await testTrade.setTotalCollateral(0, toWei("1000"));
+
+            await testTrade.setTargetLeverage(0, user1.address, toWei("2")); // 2x target leverage
+            await testTrade.setMarginAccount(0, testTrade.address, toWei("10000"), toWei("0"));
+
+            // deposit 1000 * 1 / 1 + 1000 * 1 * 0.1% + 1gas = 1002
+            // 100 << 7 = 12800, targetLeverage = 1x
+            await testTrade.connect(user1).trade(0, user1.address, toWei("1"), toWei("20000"), none, 12800);
+            var { cash, position } = await testTrade.getMarginAccount(0, user1.address);
+            expect(cash).approximateBigNumber(toWei("1"))
+            expect(position).to.equal(toWei("1"))
+            expect(await ctk.balanceOf(user1.address)).approximateBigNumber(toWei("8998"))
+            // use both old and new, (100 << 7) | 0x8000000 = 12800
+            await expect(testTrade.connect(user1).trade(0, user1.address, toWei("1"), toWei("20000"), none, 134230528)).to.be.revertedWith("invalid flags");
         })
 
         it("close", async () => {
