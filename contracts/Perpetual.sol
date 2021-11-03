@@ -161,14 +161,19 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
      *          If one trade transaction does close and open at same time (Open positions in the opposite direction)
      *          It will be treat as opening position.
      *
+     *
      *          Flags is a 32 bit uint value which indicates: (from highest bit)
-     *            1-5 bit
-     *            - close only          only close position during trading;
-     *            - market order        do not check limit price during trading;
-     *            - stop loss           only available in brokerTrade mode;
-     *            - take profit         only available in brokerTrade mode;
-     *            - use target leverage deprecated;
-     *            6-25 bit : target leverage, 2 decimals. Example: 599 means 5.99
+     *            31               27 26                     7 6              0
+     *           +---+---+---+---+---+------------------------+----------------+
+     *           | C | M | S | T | R | Target leverage 20bits | Reserved 7bits |
+     *           +---+---+---+---+---+------------------------+----------------+
+     *             |   |   |   |   |   ` Target leverage  Fixed-point decimal with 2 decimal digits. 
+     *             |   |   |   |   |                      0 means don't automatically deposit / withdraw.
+     *             |   |   |   |   `---  Reserved
+     *             |   |   |   `-------  Take profit      Only available in brokerTrade mode.
+     *             |   |   `-----------  Stop loss        Only available in brokerTrade mode.
+     *             |   `---------------  Market order     Do not check limit price during trading.
+     *             `-------------------  Close only       Only close position during trading.
      *          For stop loss and take profit, see `validateTriggerPrice` in OrderModule.sol for details.
      *
      * @param   perpetualIndex  The index of the perpetual in liquidity pool.
