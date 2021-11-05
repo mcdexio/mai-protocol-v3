@@ -174,6 +174,10 @@ contract MCDEXMultiOracle is
     ) private {
         Single storage m = markets[index];
         require(!m.isTerminated, "terminated");
+        require(m.timestamp <= timestamp, "past timestamp");
+        if (timestamp > block.timestamp) {
+            timestamp = block.timestamp;
+        }
         m.price = price;
         m.timestamp = timestamp;
         emit SetPrice(index, price, timestamp);
