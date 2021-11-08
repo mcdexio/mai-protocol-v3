@@ -30,7 +30,7 @@
     "chai": "^4.2.0",
     "ethereum-waffle": "^3.1.2",
     "ethereumjs-util": "^7.0.8",
-    "ethers": "^5.0.19",
+    "ethers": "5.4.7",
     "ethers-eip712": "^0.2.0",
     "hardhat": "^2.0.2",
     "hardhat-abi-exporter": "^2.0.6",
