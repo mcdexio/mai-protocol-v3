@@ -985,7 +985,7 @@ library TradeModule {
             if (_oldUseTargetLeverage) {
                 leverage = trader.targetLeverage;
             } else {
-                leverage = flags.newGetTargetLeverage();
+                leverage = flags.getTargetLeverageByFlags();
             }
             require(perpetual.initialMarginRate != 0, "initialMarginRate is not set");
             int256 maxLeverage = Constant.SIGNED_ONE.wdiv(perpetual.initialMarginRate);
