@@ -651,8 +651,8 @@ library TradeModule {
         int256 markPrice = perpetual.getMarkPrice();
         int256 oldMargin = perpetual.getMargin(trader, markPrice);
         {
-            require(leverage > 0, "target leverage = 0");
             int256 leverage = perpetual.getTargetLeverageWithFlags(trader, flags);
+            require(leverage > 0, "target leverage = 0");
             // openPositionMargin
             require(leverage > 0, "target leverage = 0");
             adjustCollateral = openPosition.abs().wfrac(markPrice, leverage);
