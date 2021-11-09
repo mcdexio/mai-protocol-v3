@@ -21,16 +21,19 @@ interface IChainlink {
     function decimals() external view returns (uint8);
 }
 
+/**
+ * @dev A very simple adaptor of Chainlink
+ *
+ *      isTerminated and isMarketClosed are always false.
+ */
 contract ChainlinkAdaptor is Initializable, ContextUpgradeable, AccessControlUpgradeable, IOracle {
     address public chainlink;
-    int256 internal _markPrice;
-    uint256 internal _markPriceTimestamp;
-    bool internal _isTerminated;
+    int256 internal _reserved1;
+    uint256 internal _reserved2;
+    bool internal _reserved3;
     uint8 internal _chainlinkDecimals;
     string public override collateral;
     string public override underlyingAsset;
-
-    event SetTerminated();
 
     function initialize(
         address chainlink_,
@@ -59,36 +62,24 @@ contract ChainlinkAdaptor is Initializable, ContextUpgradeable, AccessControlUpg
         return false;
     }
 
-    function isTerminated() public view override returns (bool) {
-        return _isTerminated;
+    function isTerminated() public pure override returns (bool) {
+        return false;
     }
 
-    function priceTWAPLong() public override returns (int256, uint256) {
-        updatePrice();
-        return (_markPrice, _markPriceTimestamp);
+    function priceTWAPLong() public view override returns (int256, uint256) {
+        (, int256 p, , uint256 t, ) = IChainlink(chainlink).latestRoundData();
+        int256 scalar = int256(10**(18 - _chainlinkDecimals));
+        require(
+            p > 0 &&
+                p <= type(int256).max / scalar &&
+                t > 0,
+            "invalid chainlink"
+        );
+        p = p * scalar;
+        return (p, t);
     }
 
-    function priceTWAPShort() public override returns (int256, uint256) {
+    function priceTWAPShort() public view override returns (int256, uint256) {
         return priceTWAPLong();
-    }
-
-    function setTerminated() external {
-        require(!_isTerminated, "already terminated");
-        require(hasRole(DEFAULT_ADMIN_ROLE, _msgSender()), "role");
-        _isTerminated = true;
-        emit SetTerminated();
-    }
-
-    function updatePrice() public {
-        if (!_isTerminated) {
-            (, _markPrice, , _markPriceTimestamp, ) = IChainlink(chainlink).latestRoundData();
-            require(
-                _markPrice > 0 &&
-                    _markPrice <= type(int256).max / int256(10**(18 - _chainlinkDecimals)) &&
-                    _markPriceTimestamp > 0,
-                "invalid chainlink oracle data"
-            );
-            _markPrice = _markPrice * int256(10**(18 - _chainlinkDecimals));
-        }
     }
 }

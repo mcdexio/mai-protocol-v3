@@ -13,22 +13,26 @@ interface IOracle {
     function isTerminated() external returns (bool);
 
     /**
-     * @dev Get collateral symbol.
+     * @dev Get collateral symbol. Also known as quote.
      */
     function collateral() external view returns (string memory);
 
     /**
-     * @dev Get underlying asset symbol.
+     * @dev Get underlying asset symbol. Also known as base.
      */
     function underlyingAsset() external view returns (string memory);
 
     /**
-     * @dev Mark price.
+     * @dev Mark price. Used to evaluate the account margin balance and liquidation.
+     *
+     *      It does not need to be a TWAP. This name is only for backward compatibility.
      */
     function priceTWAPLong() external returns (int256 newPrice, uint256 newTimestamp);
 
     /**
-     * @dev Index price.
+     * @dev Index price. It is AMM reference price.
+     *
+     *      It does not need to be a TWAP. This name is only for backward compatibility.
      */
     function priceTWAPShort() external returns (int256 newPrice, uint256 newTimestamp);
 }

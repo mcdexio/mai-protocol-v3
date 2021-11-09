@@ -7,6 +7,9 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 import "../../interface/IOracle.sol";
 
+/**
+ * @dev MCDEXMultiOracle collects all prices in the same contract. PriceSetter can set the price.
+ */
 contract MCDEXMultiOracle is 
     Initializable,
     ContextUpgradeable,
@@ -177,7 +180,9 @@ contract MCDEXMultiOracle is
     }
 }
 
-// note: wrapped by TransparentUpgradeableProxy
+/**
+ * @dev This is the facet of MCDEX Oracle. Each Oracle refers to one item of the MCDEXMultiOracle.
+ */
 contract MCDEXSingleOracle is Initializable, IOracle {
     MCDEXMultiOracle private _multiOracle;
     uint256 private _index;
@@ -197,19 +202,31 @@ contract MCDEXSingleOracle is Initializable, IOracle {
 
     function priceTWAPLong()
         external
-        view
         override
         returns (int256 newPrice, uint256 newTimestamp)
     {
+        // forward to TunableOracle
+        address tunableOracle = _getTunableOracle();
+        if (tunableOracle != address(0)) {
+            return IOracle(tunableOracle).priceTWAPLong();
+        }
+
+        // forward to MultiOracle
         return _multiOracle.priceTWAPLong(_index);
     }
 
     function priceTWAPShort()
         external
-        view
         override
         returns (int256 newPrice, uint256 newTimestamp)
     {
+        // forward to TunableOracle
+        address tunableOracle = _getTunableOracle();
+        if (tunableOracle != address(0)) {
+            return IOracle(tunableOracle).priceTWAPShort();
+        }
+
+        // forward to MultiOracle
         return _multiOracle.priceTWAPShort(_index);
     }
 
@@ -219,5 +236,23 @@ contract MCDEXSingleOracle is Initializable, IOracle {
 
     function isTerminated() external view override returns (bool) {
         return _multiOracle.isTerminated(_index);
+    }
+
+    /**
+     * @dev Find the new TunableOracle. This is for back-compatible. ie. to upgrade
+     *      some of the old oracles use TunableOracle instead.
+     */
+    function _getTunableOracle() internal view returns (address) {
+        // arb-rinkeby
+        if (_index == 0) {
+            return 0x3741567b65488bE7974C0C10F5c36b821CF3b732; // ETH
+        } else if (_index == 1) {
+            return 0x77E36c7bF78328D3f570AeA04b372c9E26b00F4B; // BTC
+        }
+
+        // arb-mainnet
+
+        // unrecognized
+        return address(0);
     }
 }
