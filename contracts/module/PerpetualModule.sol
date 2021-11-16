@@ -308,7 +308,10 @@ library PerpetualModule {
     /**
      * @dev     Update the funding rate of the perpetual.
      *
-     *            - funding rate = - index * position * limit / pool margin
+     *            - funding rate = - index * position * factor / pool margin
+     *            - funding rate += base funding rate when
+     *                - open interest != 0 and position >= 0 and base funding rate < 0
+     *                - open interest != 0 and position <= 0 and base funding rate > 0
      *            - funding rate = (+/-)limit when
      *                - pool margin = 0 and position != 0
      *                - abs(funding rate) > limit
