@@ -112,5 +112,25 @@
     "name": "LpGovernor",
     "address": "0x2Baac806CB2b7A07f8f73DB1329767E5a3CbDF4e",
     "deployedAt": 219945
+  },
+  "TunableOracleRegister": {
+    "type": "upgradeable",
+    "name": "TunableOracleRegister",
+    "address": "0x43800D850C87d5D585D8DDF3DFB23152A826cDeB",
+    "dependencies": {
+      "admin": "0x93a9182883C1019e1dBEbB5d40C140e7680cd151",
+      "implementation": "0x58228d352B6B2b8642395e6175b06D90ceA93B5a"
+    },
+    "deployedAt": 3100094
+  },
+  "MultiTunableOracleSetter": {
+    "type": "upgradeable",
+    "name": "MultiTunableOracleSetter",
+    "address": "0x600b8205c2c2985930c97B74204809C4746A53c7",
+    "dependencies": {
+      "admin": "0x93a9182883C1019e1dBEbB5d40C140e7680cd151",
+      "implementation": "0x55F1da2618d3ceCb55b6F0543b04c13C7aaB947D"
+    },
+    "deployedAt": 3101932
   }
 }

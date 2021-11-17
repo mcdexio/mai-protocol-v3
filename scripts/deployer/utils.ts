@@ -7,11 +7,10 @@ export function sleep(ms: number) {
 export async function ensureFinished(transaction): Promise<any> {
     const result = await transaction;
     if (typeof result.deployTransaction != 'undefined') {
-        await result.deployTransaction.wait()
+        return await result.deployTransaction.wait()
     } else {
-        await result.wait()
+        return await result.wait()
     }
-    return result
 }
 
 export function printInfo(...message) {

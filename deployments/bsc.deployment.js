@@ -153,5 +153,25 @@
     "name": "BeaconProxy",
     "address": "0xcC8A884396a7B3a6e61591D5f8949076Ed0c7353",
     "deployedAt": 11156381
+  },
+  "TunableOracleRegister": {
+    "type": "upgradeable",
+    "name": "TunableOracleRegister",
+    "address": "0x5f2ffBbb40c8FCd7E62f04A70ffe5A039ae25972",
+    "dependencies": {
+      "admin": "0xd80c8fF02Ac8917891C47559d415aB513B44DCb6",
+      "implementation": "0xB0507842B30a60c3cd967526d08e229Cb99d75ee"
+    },
+    "deployedAt": 12739864
+  },
+  "MultiTunableOracleSetter": {
+    "type": "upgradeable",
+    "name": "MultiTunableOracleSetter",
+    "address": "0x5F1D8FdC28d94511f9073410001B7E03CF1409fA",
+    "dependencies": {
+      "admin": "0xd80c8fF02Ac8917891C47559d415aB513B44DCb6",
+      "implementation": "0x20E13a2f37403B5AB22C6F8556634094046081f0"
+    },
+    "deployedAt": 12741148
   }
 }

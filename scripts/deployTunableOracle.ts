@@ -15,28 +15,19 @@ function toWei(n) { return hre.ethers.utils.parseEther(n) };
 function fromWei(n) { return hre.ethers.utils.formatEther(n); }
 
 const chainlinks = [
-    // arb-rinkeby
+    // bsc
     // base, quote, deviation, timeout, chainlink
-    ['BTC',  'ETH', '0.003',  600, '0x6eFd3CCf5c673bd5A7Ea91b414d0307a5bAb9cC1'],
-    ['BTC',  'USD', '0.003',  600, '0x0c9973e7a27d00e656B9f153348dA46CaD70d03d'],
-    ['DAI',  'USD', '0.003',  600, '0xcAE7d280828cf4a0869b26341155E4E9b864C7b2'],
-    ['ETH',  'USD', '0.0005', 600, '0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8'],
-    ['LINK', 'ETH', '0.003',  600, '0x1a658fa1a5747d73D0AD674AF12851F7d74c998e'],
-    ['LINK', 'USD', '0.003',  600, '0x52C9Eb2Cc68555357221CAe1e5f2dD956bC194E5'],
-    ['USDC', 'USD', '0.003',  600, '0xe020609A0C31f4F96dCBB8DF9882218952dD95c4'],
-    ['USDT', 'USD', '0.003',  600, '0xb1Ac85E779d05C2901812d812210F6dE144b2df0'],
+    // ['ETH',  'USD', '0.015',  900, '0x264990fbd0A4796A3E3d8E37C4d5F87a3aCa5Ebf'],
+    // ['BTC',  'USD', '0.015',  900, '0x9ef1B8c0E4F7dc8bF5719Ea496883DC6401d5b2e'],
 ]
 
 let chainlinkAdaptors = [
+    // bsc
     // chainlinkAdaptor, base, quote, deviation, timeout, chainlink
-    ["0x31004084f3B0c6754cE247cb560E6aC4C52EC5b8","BTC","ETH",'0.003',600,"0x6eFd3CCf5c673bd5A7Ea91b414d0307a5bAb9cC1"],
-    ["0x2ef7DD70B7dF600e423678b298C41e2765AF1D55","BTC","USD",'0.003',600,"0x0c9973e7a27d00e656B9f153348dA46CaD70d03d"],
-    ["0xecA5320D63895DA7cf2F5fdd25B7a2a05a78b786","DAI","USD",'0.003',600,"0xcAE7d280828cf4a0869b26341155E4E9b864C7b2"],
-    ["0x46Cac3A645ccb00Aa3fFd949A5bBFE942e844690","ETH","USD",'0.0005',600,"0x5f0423B1a6935dc5596e7A24d98532b67A0AeFd8"],
-    ["0xEee3D907BEFfBA58128975424aAaCF8412A998ae","LINK","ETH",'0.003',600,"0x1a658fa1a5747d73D0AD674AF12851F7d74c998e"],
-    ["0x8fd3C5F344F400058Cd0dC859E27571f7355a713","LINK","USD",'0.003',600,"0x52C9Eb2Cc68555357221CAe1e5f2dD956bC194E5"],
-    ["0x7387184Ce69ba00176898D5ad18723dC08b167aF","USDC","USD",'0.003',600,"0xe020609A0C31f4F96dCBB8DF9882218952dD95c4"],
-    ["0x6D17Ab17633AB79162a0b0C7002eCa0772ABe303","USDT","USD",'0.003',600,"0xb1Ac85E779d05C2901812d812210F6dE144b2df0"],
+    ["0x9542100D1117F75b8b6b8Ddc4DC2C7419A206725","ETH","USD",'0.015',900,"0x264990fbd0A4796A3E3d8E37C4d5F87a3aCa5Ebf"],
+    ["0x2Baac806CB2b7A07f8f73DB1329767E5a3CbDF4e","BTC","USD",'0.015',900,"0x9ef1B8c0E4F7dc8bF5719Ea496883DC6401d5b2e"],
+    ["0xEf5D601ea784ABd465c788C431d990b620e5Fee6","BNB","USD",'0.024',900,"0x0567F2323251f0Aab15c8dFb1967E4e8A7D42aeE"],
+    ["0x11bD9582af7Aead7638Aa9427489814DCb21395a","SPELL","USD",'0.05',1200,"0x47e01580C537Cd47dA339eA3a4aFb5998CCf037C"],
 ]
 
 async function deployChainlinkAdaptors(deployer) {
@@ -60,38 +51,54 @@ async function deployChainlinkAdaptors(deployer) {
 }
 
 async function deployRegister(deployer) {
-    const upgradeAdmin = '0xFe4493Ce82FeE8dcF1A4EA59026509237fC4CF75'
+    const upgradeAdmin = '0xd80c8fF02Ac8917891C47559d415aB513B44DCb6'
 
     // deploy (once)
     await deployer.deployAsUpgradeable("TunableOracleRegister", upgradeAdmin)
 
     // init register (once)
-    const register = await deployer.getContractAt("TunableOracleRegister", "0x089543a24c2B96084319072d1BB3c15ad63092D0")
-    await register.initialize()
+    const register = await deployer.getDeployedContract("TunableOracleRegister")
+    await ensureFinished(register.initialize())
     console.log('beacon implementation =', await register.callStatic.implementation())
 }
 
 async function registerChainlink(deployer) {
-    const register = await deployer.getContractAt("TunableOracleRegister", "0x089543a24c2B96084319072d1BB3c15ad63092D0")
+    const register = await deployer.getDeployedContract("TunableOracleRegister")
     for (const [chainlinkAdaptor, base, quote, deviation, timeout, chainlink] of chainlinkAdaptors) {
         console.log('setting', base, quote)
         await ensureFinished(register.setExternalOracle(chainlinkAdaptor, toWei(deviation), timeout));
     }
 }
 
+async function deployTunableOracle(deployer) {
+    // bsc
+    const liquidityPoolAddress = '0xdb282bbace4e375ff2901b84aceb33016d0d663d'
+
+    const register = await deployer.getDeployedContract("TunableOracleRegister")
+    for (const [chainlinkAdaptor, base, quote, deviation, timeout, chainlink] of chainlinkAdaptors) {
+        console.log('new TunableOracle', base, quote)
+        const receipt = await ensureFinished(register.newTunableOracle(liquidityPoolAddress, chainlinkAdaptor));
+        console.log('  tx', receipt.hash)
+        console.log('  deployed at', receipt.events[0].args['newOracle'])
+    }
+}
+
 async function deployMultiSetter(deployer) {
-    const upgradeAdmin = '0xFe4493Ce82FeE8dcF1A4EA59026509237fC4CF75'
+    const upgradeAdmin = '0xd80c8fF02Ac8917891C47559d415aB513B44DCb6'
 
     // deploy (once)
     // await deployer.deployAsUpgradeable("MultiTunableOracleSetter", upgradeAdmin)
 
     // init register (once)
-    const setter = await deployer.getContractAt("MultiTunableOracleSetter", "0x0D194368AA004eaa23b8c2d8b56181D237bFF54F")
+    const setter = await deployer.getDeployedContract("MultiTunableOracleSetter")
     await ensureFinished(setter.initialize())
 
     // add oracle
-    await ensureFinished(setter.setOracle(0, '0x3741567b65488bE7974C0C10F5c36b821CF3b732'))
-    await ensureFinished(setter.setOracle(1, '0x77e36c7bf78328d3f570aea04b372c9e26b00f4b'))
+    // bsc
+    await ensureFinished(setter.setOracle(0, '0x7a6bee1474069dC81AEaf65799276b9429bED587'))
+    await ensureFinished(setter.setOracle(1, '0x285D90D4a30c30AFAE1c8dc3eaeb41Cc23Ed78Bf'))
+    await ensureFinished(setter.setOracle(2, '0x4E9712fC3e6Fc35b7b2155Bb92c11bC0BEd836f1'))
+    await ensureFinished(setter.setOracle(3, '0x2bc36B3f8f8E3Db2902Ac8cEF650B687deCE25f6'))
 }
 
 async function main(_, deployer, accounts) {
@@ -104,8 +111,11 @@ async function main(_, deployer, accounts) {
     // 3. add chainlink into register
     // await registerChainlink(deployer)
 
-    // 4. deploy multi setter (optional)
-    await deployMultiSetter(deployer)
+    // 4. use Register to deploy some oracles
+    // await deployTunableOracle(deployer)
+
+    // 5. deploy multi setter (optional)
+    // await deployMultiSetter(deployer)
 }
 
 ethers.getSigners()
