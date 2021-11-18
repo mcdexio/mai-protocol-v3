@@ -245,16 +245,19 @@ contract MCDEXSingleOracle is Initializable, IOracle {
     /**
      * @dev Find the new TunableOracle. This is for back-compatible. ie. to upgrade
      *      some of the old oracles use TunableOracle instead.
+     * @dev [ConfirmBeforeDeployment]
      */
     function _getTunableOracle() internal view returns (address) {
-        // arb-rinkeby
+        // bsc
         if (_index == 0) {
-            return 0x3741567b65488bE7974C0C10F5c36b821CF3b732; // ETH
+            return 0x7a6bee1474069dC81AEaf65799276b9429bED587; // ETH
         } else if (_index == 1) {
-            return 0x77E36c7bF78328D3f570AeA04b372c9E26b00F4B; // BTC
+            return 0x285D90D4a30c30AFAE1c8dc3eaeb41Cc23Ed78Bf; // BTC
+        } else if (_index == 2) {
+            return 0x4E9712fC3e6Fc35b7b2155Bb92c11bC0BEd836f1; // BNB
+        } else if (_index == 3) {
+            return 0x2bc36B3f8f8E3Db2902Ac8cEF650B687deCE25f6; // SPELL
         }
-
-        // arb-mainnet
 
         // unrecognized
         return address(0);
