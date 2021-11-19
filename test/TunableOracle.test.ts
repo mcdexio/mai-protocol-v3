@@ -4,7 +4,8 @@ import {
     toWei,
     createContract,
     getAccounts,
-    createLiquidityPoolFactory
+    createLiquidityPoolFactory,
+    deployPoolCreator
 } from "../scripts/utils";
 import "./helper";
 
@@ -16,21 +17,20 @@ describe("TunableOracle", () => {
     let now;
     let pool;
 
-    before(async () => {
-        accounts = await getAccounts();
-    })
-
     beforeEach(async () => {
+        accounts = await getAccounts();
+        const vault = accounts[9];
+
         // liquidity pool
         const LiquidityPoolFactory = await createLiquidityPoolFactory();
         var symbol = await createContract("SymbolService");
         await symbol.initialize(10000);
-        let ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
-        var poolTemplate = await LiquidityPoolFactory.deploy();
+        var ctk = await createContract("CustomERC20", ["collateral", "CTK", 18]);
+        var perp0Template = await LiquidityPoolFactory[0].deploy();
+        var perp1Template = await LiquidityPoolFactory[1].deploy();
         var govTemplate = await createContract("TestLpGovernor");
-        let poolCreator = await createContract("PoolCreator");
-        await poolCreator.initialize(symbol.address, accounts[9].address, toWei("0.001"));
-        await poolCreator.addVersion(poolTemplate.address, govTemplate.address, 0, "initial version");
+        var poolCreator = await deployPoolCreator(symbol, vault, toWei("0.001"));
+        await poolCreator.addVersion([perp0Template.address, perp1Template.address], govTemplate.address, 0, "initial version");
         await symbol.addWhitelistedFactory(poolCreator.address);
 
         const { liquidityPool, governor } = await poolCreator.callStatic.createLiquidityPool(
@@ -40,7 +40,8 @@ describe("TunableOracle", () => {
             ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1])
         );
         await poolCreator.createLiquidityPool(ctk.address, 18, 998, ethers.utils.defaultAbiCoder.encode(["bool", "int256", "uint256", "uint256"], [false, toWei("1000000"), 0, 1]));
-        pool = await LiquidityPoolFactory.attach(liquidityPool);
+        pool = await ethers.getContractAt("LiquidityPoolAllHops", liquidityPool);
+
         // external oracle
         externalOracle = await createContract("OracleAdaptor", ["USD", "ETH"]);
         now = (await ethers.provider.getBlock()).timestamp;
