@@ -556,12 +556,6 @@ abstract contract GovernorAlpha is Initializable, ContextUpgradeable {
         emit VoteCast(account, proposalId, support, votes);
     }
 
-    function _getOperator() internal view returns (address) {
-        (, , address[7] memory addresses, , ) = ILiquidityPoolGetter(_target)
-            .getLiquidityPoolInfo();
-        return addresses[1];
-    }
-
     function _executeTransaction(
         address target,
         string memory signature,
@@ -588,6 +582,8 @@ abstract contract GovernorAlpha is Initializable, ContextUpgradeable {
     function _getBlockNumber() internal view virtual returns (uint256) {
         return block.number;
     }
+
+    function _getOperator() internal view virtual returns (address);
 
     bytes32[50] private __gap;
 }
