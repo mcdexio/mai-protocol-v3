@@ -487,11 +487,38 @@ contract MultiTunableOracleSetter is
         }
     }
 
+    /**
+     * @dev FineTuner can give up the FineTunedPrice.
+     */
+    function release1(uint32 id1) external {
+        require(hasRole(FINE_TUNER_ROLE, _msgSender()), "role");
+        _release(id1);
+    }
+
+    function release2(uint32 id1, uint32 id2) external {
+        require(hasRole(FINE_TUNER_ROLE, _msgSender()), "role");
+        _release(id1);
+        _release(id2);
+    }
+
+    function releases(uint32[] memory ids) external {
+        require(hasRole(FINE_TUNER_ROLE, _msgSender()), "role");
+        for (uint256 i = 0; i < ids.length; i++) {
+            _release(ids[i]);
+        }
+    }
+
     function _setPrice(bytes32 price1) internal {
         uint32 id = uint32(uint256(price1) >> 224);
         int192 price = int192(uint256(price1));
         TunableOracle oracle = TunableOracle(tunableOracles[id]);
         require(oracle != TunableOracle(0), "unregistered");
         oracle.setPrice(price);
+    }
+
+    function _release(uint32 id) internal {
+        TunableOracle oracle = TunableOracle(tunableOracles[id]);
+        require(oracle != TunableOracle(0), "unregistered");
+        oracle.release();
     }
 }
