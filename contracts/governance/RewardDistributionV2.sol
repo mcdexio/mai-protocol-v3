@@ -69,7 +69,7 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
 
     function _getOperator() internal view virtual returns (address);
 
-    function __RewardDistribution_init_unchained(address mcbToken_, address poolCreator_)
+    function __RewardDistributionV2_init_unchained(address mcbToken_, address poolCreator_)
         internal
         initializer
     {

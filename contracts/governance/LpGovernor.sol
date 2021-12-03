@@ -47,7 +47,7 @@ contract LpGovernor is
     ) external virtual override initializer {
         __ERC20_init_unchained(name, symbol);
         __GovernorAlpha_init_unchained(target);
-        __RewardDistribution_init_unchained(mcbToken, poolCreator);
+        __RewardDistributionV2_init_unchained(mcbToken, poolCreator);
 
         _minter = minter;
         _target = target;
