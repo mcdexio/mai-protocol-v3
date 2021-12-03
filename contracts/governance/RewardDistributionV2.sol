@@ -13,7 +13,6 @@ import "../interface/IPoolCreatorFull.sol";
 import "../libraries/SafeMathExt.sol";
 
 struct Distribution {
-    address rewardToken;
     uint256 periodFinish;
     uint256 rewardRate;
     uint256 lastUpdateTime;
@@ -26,6 +25,7 @@ struct Distribution {
 // storage of V1, DO NOT change the types of vars
 contract RewardDistributionV2Storage is Initializable, ContextUpgradeable {
     IPoolCreatorFull public poolCreator;
+    address public mcbToken;
 
     // override v1 vars, edit this carefully
     Distribution internal _mainDistribution;
@@ -43,7 +43,7 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
 
-    event DistributionCreated(address indexed token, uint256 rewardRate, uint256 rewardAmount);
+    event SubDistributionCreated(address indexed token, uint256 rewardRate, uint256 rewardAmount);
     event RewardPaid(address indexed token, address indexed user, uint256 reward);
     event RewardAdded(address indexed token, uint256 reward, uint256 periodFinish);
     event RewardRateChanged(
@@ -54,7 +54,7 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
     );
 
     modifier onlyDistributor(address token) {
-        if (token == _mainDistribution.rewardToken) {
+        if (token == mcbToken) {
             require(_msgSender() == poolCreator.owner(), "caller must be owner of pool creator");
         } else {
             require(_msgSender() == _getOperator(), "caller must be operator");
@@ -69,69 +69,78 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
 
     function _getOperator() internal view virtual returns (address);
 
-    function __RewardDistribution_init_unchained(address mcbToken, address poolCreator_)
+    function __RewardDistribution_init_unchained(address mcbToken_, address poolCreator_)
         internal
         initializer
     {
         poolCreator = IPoolCreatorFull(poolCreator_);
-        _mainDistribution.rewardToken = mcbToken;
+        mcbToken = mcbToken_;
     }
 
     /**
-     * @notice  Create a new reward status for given token, setting the reward rate. Duplicated creation will be reverted.
+     * @notice  Create a new reward distribution for given token, setting the reward rate. Duplicated creation will be reverted.
+     *
+     * @param   token        Reward token beside mcb to release.
+     * @param   rewardRate   Reward distribution rate. NOTE here the decimal of reward rate should follow the token, not always 18.
+     * @param   rewardAmount The amount of reward to distribute. NOTE here the decimal of reward rate should follow the token, not always 18.
      */
-    function createDistribution(
+    function createSubDistribution(
         address token,
         uint256 rewardRate,
         uint256 rewardAmount
     ) external onlyDistributor(token) {
         require(token != address(0), "invalid reward token");
         require(token.isContract(), "reward token must be contract");
-        require(!_hasDistribution(token), "status already exists");
+        require(!_hasDistribution(token), "distribution already exists");
 
         _subRewardTokens.push(token);
-        _subDistributions[token].rewardToken = token;
 
-        _setRewardRate(_getDistribution(token), rewardRate);
-        _notifyRewardAmount(_getDistribution(token), rewardAmount);
-
-        emit DistributionCreated(token, rewardRate, rewardAmount);
+        // avoid existed check
+        Distribution storage distribution = _subDistributions[token];
+        _setRewardRate(distribution, token, rewardRate);
+        if (rewardAmount > 0) {
+            _notifyRewardAmount(distribution, token, rewardAmount);
+        }
+        emit SubDistributionCreated(token, rewardRate, rewardAmount);
     }
 
     /**
      * @notice  Set reward distribution rate. If there is unfinished distribution, the end time will be changed
      *          according to change of newRewardRate.
      *
-     * @param   newRewardRate   New reward distribution rate.
+     * @param   token           Reward token to distribute.
+     * @param   newRewardRate   Reward distribution rate. NOTE here the decimal of reward rate should follow the token, not always 18.
      */
     function setRewardRate(address token, uint256 newRewardRate)
         external
         virtual
         onlyDistributor(token)
     {
-        _updateReward(_getDistribution(token), address(0));
-        _setRewardRate(_getDistribution(token), newRewardRate);
+        Distribution storage distribution = _getDistribution(token);
+        _updateReward(distribution, address(0));
+        _setRewardRate(distribution, token, newRewardRate);
     }
 
     /**
      * @notice  Add new distributable reward to current pool, this will extend an exist distribution or
      *          start a new distribution if previous one is already ended.
      *
-     * @param   reward  Amount of reward to add.
+     * @param   reward  Amount of reward to add. NOTE here the decimal of reward rate should follow the token, not always 18.
      */
     function notifyRewardAmount(address token, uint256 reward)
         external
         virtual
         onlyDistributor(token)
     {
-        _updateReward(_getDistribution(token), address(0));
-        _notifyRewardAmount(_getDistribution(token), reward);
+        Distribution storage distribution = _getDistribution(token);
+        _updateReward(distribution, address(0));
+        _notifyRewardAmount(distribution, token, reward);
     }
 
     /**
      * @notice  Return real time reward of account.
      */
-    function distributionStatuses()
+    function distributionStates()
         public
         view
         returns (
@@ -149,15 +158,16 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
         lastUpdateTime = new uint256[](length + 1);
         rewardPerTokenStored = new uint256[](length + 1);
 
-        tokens[0] = _mainDistribution.rewardToken;
+        tokens[0] = mcbToken;
         rewardRates[0] = _mainDistribution.rewardRate;
         periodFinishes[0] = _mainDistribution.periodFinish;
         lastUpdateTime[0] = _mainDistribution.lastUpdateTime;
         rewardPerTokenStored[0] = _mainDistribution.rewardPerTokenStored;
 
         for (uint256 i = 0; i < length; i++) {
+            address token = _subRewardTokens[i];
             Distribution storage distribution = _subDistributions[_subRewardTokens[i]];
-            tokens[i + 1] = distribution.rewardToken;
+            tokens[i + 1] = token;
             rewardRates[i + 1] = distribution.rewardRate;
             periodFinishes[i + 1] = distribution.periodFinish;
             lastUpdateTime[i + 1] = distribution.lastUpdateTime;
@@ -177,13 +187,24 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
         tokens = new address[](length + 1);
         earnedAmounts = new uint256[](length + 1);
 
-        tokens[0] = _mainDistribution.rewardToken;
+        tokens[0] = mcbToken;
         earnedAmounts[0] = _earned(_mainDistribution, account);
 
         for (uint256 i = 0; i < length; i++) {
-            tokens[i + 1] = _subRewardTokens[i];
-            earnedAmounts[i + 1] = _earned(_subDistributions[_subRewardTokens[i]], account);
+            address token = _subRewardTokens[i];
+            tokens[i + 1] = token;
+            earnedAmounts[i + 1] = _earned(_subDistributions[token], account);
         }
+    }
+
+    /**
+     * @notice  Claim remaining reward of a token for caller.
+     */
+    function getReward(address token) public {
+        address account = _msgSender();
+        Distribution storage distribution = _getDistribution(token);
+        _updateReward(distribution, account);
+        _getReward(distribution, token, account);
     }
 
     /**
@@ -192,22 +213,21 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
     function getAllRewards() public {
         address account = _msgSender();
         _updateRewards(account);
-        _getReward(_mainDistribution, account);
+        _getReward(_mainDistribution, mcbToken, account);
         uint256 length = _subRewardTokens.length;
         for (uint256 i = 0; i < length; i++) {
-            _getReward(_subDistributions[_subRewardTokens[i]], account);
+            address token = _subRewardTokens[i];
+            _getReward(_subDistributions[token], token, account);
         }
     }
 
     function _hasDistribution(address token) public view returns (bool) {
-        return
-            (_mainDistribution.rewardToken == token) ||
-            (_subDistributions[token].rewardToken == token);
+        return (token == mcbToken) || (_subDistributions[token].periodFinish != 0);
     }
 
     function _getDistribution(address token) internal view returns (Distribution storage) {
         require(_hasDistribution(token), "distribution not exists");
-        if (_mainDistribution.rewardToken == token) {
+        if (token == mcbToken) {
             return _mainDistribution;
         } else {
             return _subDistributions[token];
@@ -250,7 +270,11 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
                 .add(distribution.rewards[account]);
     }
 
-    function _setRewardRate(Distribution storage distribution, uint256 newRewardRate) internal {
+    function _setRewardRate(
+        Distribution storage distribution,
+        address token,
+        uint256 newRewardRate
+    ) internal {
         if (newRewardRate == 0) {
             distribution.periodFinish = _getBlockNumber();
         } else if (distribution.periodFinish != 0) {
@@ -262,7 +286,7 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
                 .add(_getBlockNumber());
         }
         emit RewardRateChanged(
-            distribution.rewardToken,
+            token,
             distribution.rewardRate,
             newRewardRate,
             distribution.periodFinish
@@ -270,10 +294,11 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
         distribution.rewardRate = newRewardRate;
     }
 
-    function _notifyRewardAmount(Distribution storage distribution, uint256 rewardAmount)
-        internal
-        virtual
-    {
+    function _notifyRewardAmount(
+        Distribution storage distribution,
+        address token,
+        uint256 rewardAmount
+    ) internal virtual {
         require(distribution.rewardRate > 0, "rewardRate is zero");
         uint256 period = rewardAmount.div(distribution.rewardRate);
         // already finished or not initialized
@@ -284,15 +309,19 @@ abstract contract RewardDistributionV2 is RewardDistributionV2Storage {
             // not finished or not initialized
             distribution.periodFinish = distribution.periodFinish.add(period);
         }
-        emit RewardAdded(distribution.rewardToken, rewardAmount, distribution.periodFinish);
+        emit RewardAdded(token, rewardAmount, distribution.periodFinish);
     }
 
-    function _getReward(Distribution storage distribution, address account) internal {
+    function _getReward(
+        Distribution storage distribution,
+        address token,
+        address account
+    ) internal {
         uint256 reward = _earned(distribution, account);
         if (reward > 0) {
             distribution.rewards[account] = 0;
-            IERC20Upgradeable(distribution.rewardToken).safeTransfer(account, reward);
-            emit RewardPaid(distribution.rewardToken, account, reward);
+            IERC20Upgradeable(token).safeTransfer(account, reward);
+            emit RewardPaid(token, account, reward);
         }
     }
 

@@ -31,22 +31,14 @@ contract TestLpGovernor is LpGovernor {
         return super._getTransferDelay();
     }
 
-    function setRewardRateV1(uint256 newRewardRate)
-        external
-        virtual
-        onlyDistributor(_mainDistribution.rewardToken)
-    {
+    function setRewardRateV1(uint256 newRewardRate) external virtual onlyDistributor(mcbToken) {
         _updateReward(_mainDistribution, address(0));
-        _setRewardRate(_mainDistribution, newRewardRate);
+        _setRewardRate(_mainDistribution, mcbToken, newRewardRate);
     }
 
-    function notifyRewardAmountV1(uint256 reward)
-        external
-        virtual
-        onlyDistributor(_mainDistribution.rewardToken)
-    {
+    function notifyRewardAmountV1(uint256 reward) external virtual onlyDistributor(mcbToken) {
         _updateReward(_mainDistribution, address(0));
-        _notifyRewardAmount(_mainDistribution, reward);
+        _notifyRewardAmount(_mainDistribution, mcbToken, reward);
     }
 
     function lastBlockRewardApplicableV1() public view returns (uint256) {
@@ -63,7 +55,7 @@ contract TestLpGovernor is LpGovernor {
 
     function getRewardV1() public {
         _updateReward(_mainDistribution, _msgSender());
-        _getReward(_mainDistribution, _msgSender());
+        _getReward(_mainDistribution, mcbToken, _msgSender());
     }
 
     function lastUpdateTimeV1() public view returns (uint256) {
