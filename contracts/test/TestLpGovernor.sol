@@ -30,4 +30,65 @@ contract TestLpGovernor is LpGovernor {
         if (_target == address(0)) return 0;
         return super._getTransferDelay();
     }
+
+    function setRewardRateV1(uint256 newRewardRate)
+        external
+        virtual
+        onlyDistributor(poolCreator.getMCBToken())
+    {
+        _updateReward(_mainDistribution, address(0));
+        _setRewardRate(_mainDistribution, poolCreator.getMCBToken(), newRewardRate);
+    }
+
+    function notifyRewardAmountV1(uint256 reward)
+        external
+        virtual
+        onlyDistributor(poolCreator.getMCBToken())
+    {
+        _updateReward(_mainDistribution, address(0));
+        _notifyRewardAmount(_mainDistribution, poolCreator.getMCBToken(), reward);
+    }
+
+    function lastBlockRewardApplicableV1() public view returns (uint256) {
+        return _lastBlockRewardApplicable(_mainDistribution);
+    }
+
+    function rewardPerTokenV1() public view returns (uint256) {
+        return _rewardPerToken(_mainDistribution);
+    }
+
+    function earnedV1(address account) public view returns (uint256) {
+        return _earned(_mainDistribution, account);
+    }
+
+    function getRewardV1() public {
+        _updateReward(_mainDistribution, _msgSender());
+        _getReward(_mainDistribution, poolCreator.getMCBToken(), _msgSender());
+    }
+
+    function lastUpdateTimeV1() public view returns (uint256) {
+        return _mainDistribution.lastUpdateTime;
+    }
+
+    function periodFinishV1() public view returns (uint256) {
+        return _mainDistribution.periodFinish;
+    }
+
+    function rewardsV1(address account) public view returns (uint256) {
+        return _mainDistribution.rewards[account];
+    }
+
+    function userRewardPerTokenPaidV1(address account) public view returns (uint256) {
+        return _mainDistribution.userRewardPerTokenPaid[account];
+    }
+
+    address public operator;
+
+    function setOperator(address account) external {
+        operator = account;
+    }
+
+    function _getOperator() internal view virtual override returns (address) {
+        return operator;
+    }
 }

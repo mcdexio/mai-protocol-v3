@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 import "./GovernorAlpha.sol";
-import "./RewardDistribution.sol";
+import "./RewardDistributionV2.sol";
 import "../interface/IGovernor.sol";
 import "../interface/ILiquidityPoolGetter.sol";
 
@@ -18,11 +18,13 @@ contract LpGovernor is
     ContextUpgradeable,
     ERC20Upgradeable,
     GovernorAlpha,
-    RewardDistribution
+    RewardDistributionV2
 {
     using SafeMathUpgradeable for uint256;
+
     // admin:  to mint/burn token
     address internal _minter;
+
     mapping(address => uint256) public lastMintBlock;
 
     /**
@@ -43,7 +45,7 @@ contract LpGovernor is
     ) external virtual override initializer {
         __ERC20_init_unchained(name, symbol);
         __GovernorAlpha_init_unchained(target);
-        __RewardDistribution_init_unchained(poolCreator);
+        __RewardDistributionV2_init_unchained(poolCreator);
 
         _minter = minter;
         _target = target;
@@ -87,7 +89,7 @@ contract LpGovernor is
         public
         view
         virtual
-        override(IGovernor, ERC20Upgradeable, GovernorAlpha, RewardDistribution)
+        override(IGovernor, ERC20Upgradeable, GovernorAlpha, RewardDistributionV2)
         returns (uint256)
     {
         return ERC20Upgradeable.balanceOf(account);
@@ -100,7 +102,7 @@ contract LpGovernor is
         public
         view
         virtual
-        override(IGovernor, ERC20Upgradeable, GovernorAlpha, RewardDistribution)
+        override(IGovernor, ERC20Upgradeable, GovernorAlpha, RewardDistributionV2)
         returns (uint256)
     {
         return ERC20Upgradeable.totalSupply();
@@ -112,14 +114,36 @@ contract LpGovernor is
         uint256 amount
     ) internal virtual override {
         require(!isLocked(sender), "sender is locked");
-        _updateReward(sender);
-        _updateReward(recipient);
+        _updateRewards(sender);
+        _updateRewards(recipient);
         super._beforeTokenTransfer(sender, recipient, amount);
     }
 
     function _getTransferDelay() internal view virtual returns (uint256) {
         (, , , , uint256[6] memory uintNums) = ILiquidityPoolGetter(_target).getLiquidityPoolInfo();
         return uintNums[5];
+    }
+
+    function _getOperator()
+        internal
+        view
+        virtual
+        override(GovernorAlpha, RewardDistributionV2)
+        returns (address)
+    {
+        (, , address[7] memory addresses, , ) = ILiquidityPoolGetter(_target)
+            .getLiquidityPoolInfo();
+        return addresses[1];
+    }
+
+    function _getBlockNumber()
+        internal
+        view
+        virtual
+        override(GovernorAlpha, RewardDistributionV2)
+        returns (uint256)
+    {
+        return block.number;
     }
 
     bytes32[49] private __gap;
