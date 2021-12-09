@@ -234,6 +234,66 @@ describe("TunableOracle", () => {
         expect(p[1]).to.equal(now - 10);
     })
 
+    describe("Second external", () => {
+        let second
+        
+        beforeEach(async () => {
+            second = await createContract("OracleAdaptor", ["USD", "ETH"]);
+            second.setMarkPrice(toWei("1001"), now - 9);
+            second.setIndexPrice(toWei("1001"), now - 9);
+            let p = await oracle0.callStatic.priceTWAPShort();
+            oracle0.setSecondExternalOracle(second.address)
+        })
+
+        it("release", async () => {
+            let now2 = (await ethers.provider.getBlock()).timestamp;
+            
+            // secondPrice is default
+            await oracle0.setBlockTimestamp(now2);
+            let p = await oracle0.callStatic.priceTWAPShort();
+            expect(p[0]).approximateBigNumber(toWei("1001"));
+            expect(p[1]).to.equal(now2);
+            p = await oracle0.callStatic.priceTWAPLong();
+            expect(p[0]).approximateBigNumber(toWei("1000"));
+            expect(p[1]).to.equal(now - 10);
+
+            // tune
+            await oracle0.setBlockTimestamp(now2 + 1);
+            await oracle0.setPrice(toWei("1005"));
+            await oracle0.setBlockTimestamp(now2 + 1);
+            p = await oracle0.callStatic.priceTWAPShort();
+            expect(p[0]).approximateBigNumber(toWei("1005"));
+            expect(p[1]).to.equal(now2 + 1);
+            p = await oracle0.callStatic.priceTWAPLong();
+            expect(p[0]).approximateBigNumber(toWei("1000"));
+            expect(p[1]).to.equal(now - 10);
+    
+            // release
+            await oracle0.release();
+            p = await oracle0.callStatic.priceTWAPShort();
+            expect(p[0]).approximateBigNumber(toWei("1001"));
+            expect(p[1]).to.equal(now2 + 1);
+            p = await oracle0.callStatic.priceTWAPLong();
+            expect(p[0]).approximateBigNumber(toWei("1000"));
+            expect(p[1]).to.equal(now - 10);
+        })
+            
+        it("we terminated, and price should not change", async () => {
+            let now2 = (await ethers.provider.getBlock()).timestamp;
+            await oracle0.setBlockTimestamp(now2);
+            await register.setTerminated(externalOracle.address);
+            second.setIndexPrice(toWei("1010"), now + 10);
+
+            let p = await oracle0.callStatic.priceTWAPShort();
+            expect(p[0]).approximateBigNumber(toWei("1001"));
+            expect(p[1]).to.equal(now - 9);
+            p = await oracle0.callStatic.priceTWAPLong();
+            expect(p[0]).approximateBigNumber(toWei("1000"));
+            expect(p[1]).to.equal(now - 10);
+        })
+        
+    })
+
     describe("MultiTunableOracleSetter", () => {
         let setter
 

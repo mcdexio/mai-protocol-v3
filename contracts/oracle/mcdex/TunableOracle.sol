@@ -177,6 +177,7 @@ contract TunableOracleRegister is
  *      IndexPrice can be set by FineTuner unless timeout or given up (released) by FineTuner.
  *
  *      CAUTION: TunableOracle only uses externalOracle.markPrice.
+ *      CAUTION: TunableOracle only uses secondExternalOracle.indexPrice.
  *
  *               +--------+--------+-----------+--------+---------+--------+
  * FineTunePrice | Price1 |        | (timeout) | Price4 | Release |        |
@@ -193,19 +194,22 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
     using SafeCastUpgradeable for int256;
     using SafeCastUpgradeable for uint256;
 
-    TunableOracleRegister public register;
-    ILiquidityPoolGetter public liquidityPool;
-    IOracle public externalOracle;
+    TunableOracleRegister public register;      // register can Terminate a TunableOracle
+    ILiquidityPoolGetter public liquidityPool;  // only liquidityPool.operator can set FineTuner
+    IOracle public externalOracle;              // as markPrice. as indexPrice if fineTunedPrice released
 
     // in order to save gas
     struct Price {
         int192 price;
         uint64 timestamp;
     }
-    Price public externalPrice;
-    Price public fineTunedPrice;
-    bool public isReleased;
-    address public fineTuner;
+    Price public externalPrice;     // read from externalOracle
+    Price public fineTunedPrice;    // set by FineTuner
+    bool public isReleased;         // set by FineTuner
+    address public fineTuner;       // only liquidityPool.operator can set FineTuner
+
+    IOracle public secondExternalOracle; // if set, used as indexPrice if fineTunedPrice released
+    Price public secondExternalPrice;    // read from secondExternalOracle
 
     event SetFineTuner(address fineTuner);
     event SetPrice(int256 price, uint256 timestamp);
@@ -266,7 +270,7 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
         require(!register.isTerminated(address(externalOracle)), "terminated");
         require(!externalOracle.isTerminated(), "external terminated");
 
-        // save the initial mark price to make sure everything is working
+        // save the initial price to make sure everything is working
         _forceUpdateExternalOracle();
     }
 
@@ -309,6 +313,7 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
         bool isTerminated_ = isTerminated();
         if (!isTerminated_) {
             _forceUpdateExternalOracle();
+            _forceUpdateSecondExternalOracle();
         } else {
             // leave the last price unchanged
         }
@@ -320,6 +325,9 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
             currentTime = blockTimestamp();
         } else {
             currentTime = uint256(externalPrice.timestamp).max(uint256(fineTunedPrice.timestamp));
+            if (secondExternalOracle != IOracle(0)) {
+                currentTime = currentTime.max(uint256(secondExternalPrice.timestamp));
+            }
         }
 
         // use ExternalOracle
@@ -328,11 +336,16 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
         );
         uint256 timeToDie = uint256(fineTunedPrice.timestamp) + uint256(config.timeout);
         if (currentTime >= timeToDie || isReleased) {
-            return (
-                markPrice,
-                // time can not turn back
-                uint256(externalPrice.timestamp).max(currentTime)
-            );
+            // time can not turn back
+            int256 fallbackPrice = markPrice;
+
+            // use second external
+            if (secondExternalOracle != IOracle(0)) {
+                fallbackPrice = secondExternalPrice.price;
+            }
+
+            // use external
+            return (fallbackPrice, currentTime);
         }
 
         // use FineTuner
@@ -364,6 +377,18 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
         require(fineTuner != newFineTuner, "already set");
         fineTuner = newFineTuner;
         emit SetFineTuner(newFineTuner);
+    }
+
+    /**
+     * @dev Operator can grant a FineTuner.
+     */
+    function setSecondExternalOracle(IOracle newIOracle) external onlyOperator {
+        require(!isTerminated(), "terminated");
+        require(secondExternalOracle != newIOracle, "already set");
+        secondExternalOracle = newIOracle;
+
+        // save the initial price to make sure everything is working
+        _forceUpdateSecondExternalOracle();
     }
 
     /**
@@ -408,6 +433,20 @@ contract TunableOracle is Initializable, ContextUpgradeable, IOracle {
         // FineTuned price timestamp will >= markPrice.timestamp.
         t = t.min(blockTimestamp());
         externalPrice = Price(_toInt192(p), t.toUint64());
+    }
+
+    function _forceUpdateSecondExternalOracle() internal {
+        if (secondExternalOracle == IOracle(0)) {
+            return;
+        }
+        (int256 p, uint256 t) = secondExternalOracle.priceTWAPShort();
+        require(p > 0, "second price <= 0");
+        require(t > 0, "second time = 0");
+        require(secondExternalPrice.timestamp <= t, "external time reversed");
+        // truncate timestamp to block.timestamp, so that when FineTuner sets price,
+        // FineTuned price timestamp will >= markPrice.timestamp.
+        t = t.min(blockTimestamp());
+        secondExternalPrice = Price(_toInt192(p), t.toUint64());
     }
 
     function _toInt192(int256 value) internal pure returns (int192) {
