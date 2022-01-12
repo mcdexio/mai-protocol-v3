@@ -7,6 +7,7 @@ import "./Type.sol";
 import "./Storage.sol";
 
 import "./interface/ILiquidityPoolGovernance.sol";
+import "./interface/IPoolCreatorFull.sol";
 
 // @title Governance is the contract to maintain liquidityPool parameters.
 contract Governance is Storage, ILiquidityPoolGovernance {
@@ -16,6 +17,8 @@ contract Governance is Storage, ILiquidityPoolGovernance {
     using LiquidityPoolModule for LiquidityPoolStorage;
     using LiquidityPoolModule2 for LiquidityPoolStorage;
 
+    event SetGasPriceLimit(uint256 newGasPriceLimit);
+
     modifier onlyGovernor() {
         require(_msgSender() == _liquidityPool.governor, "only governor is allowed");
         _;
@@ -23,6 +26,14 @@ contract Governance is Storage, ILiquidityPoolGovernance {
 
     modifier onlyOperator() {
         require(_msgSender() == _liquidityPool.getOperator(), "only operator is allowed");
+        _;
+    }
+
+    modifier onlyOwnerOfPoolCreator() {
+        require(
+            _msgSender() == IPoolCreatorFull(_liquidityPool.creator).owner(),
+            "caller must be owner of pool creator"
+        );
         _;
     }
 
@@ -42,6 +53,14 @@ contract Governance is Storage, ILiquidityPoolGovernance {
      */
     function checkIn() public onlyOperator {
         _liquidityPool.checkIn();
+    }
+
+    /**
+        @notice set gas price limit in wei, 0 == unlimited
+     */
+    function setGasPriceLimit(uint256 newGasPriceLimit) public onlyOwnerOfPoolCreator {
+        _gasPriceLimit = newGasPriceLimit;
+        emit SetGasPriceLimit(newGasPriceLimit);
     }
 
     /**

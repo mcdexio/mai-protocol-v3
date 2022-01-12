@@ -182,7 +182,7 @@ describe('GovernorAlpha', () => {
             "setFastCreationEnabled to true"
         )).to.be.revertedWith("last proposal is active");
 
-        await target.setOperatorDebug(user2.address);
+        await stk.setOperator(user2.address);
         await governor.connect(user2).propose(
             ["setFastCreationEnabled(bool)"],
             ["0x0000000000000000000000000000000000000000000000000000000000000001"],
@@ -213,7 +213,6 @@ describe('GovernorAlpha', () => {
         await stk.mint(user1.address, toWei("1000"));
         expect(await governor.getProposalThreshold()).to.equal(toWei("20"))
     });
-
 
     it("quorum", async () => {
         await stk.mint(user1.address, toWei("1000"));

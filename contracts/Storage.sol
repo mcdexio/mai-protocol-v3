@@ -13,12 +13,13 @@ contract Storage is ContextUpgradeable {
     using LiquidityPoolModule2 for LiquidityPoolStorage;
 
     LiquidityPoolStorage internal _liquidityPool;
+    uint256 internal _gasPriceLimit;
 
     modifier onlyNotUniverseSettled() {
         require(!IPoolCreatorFull(_liquidityPool.creator).isUniverseSettled(), "universe settled");
         _;
     }
-    
+
     modifier onlyExistedPerpetual(uint256 perpetualIndex) {
         require(perpetualIndex < _liquidityPool.perpetualCount, "perpetual not exist");
         _;
@@ -40,5 +41,10 @@ contract Storage is ContextUpgradeable {
         _;
     }
 
-    bytes32[28] private __gap;
+    modifier limitedGasPrice() {
+        require(_gasPriceLimit == 0 || tx.gasprice <= _gasPriceLimit, "gas price exceeded");
+        _;
+    }
+
+    bytes32[27] private __gap;
 }

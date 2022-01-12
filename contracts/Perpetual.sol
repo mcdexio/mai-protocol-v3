@@ -167,7 +167,7 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
      *           +---+---+---+---+---+------------------------+----------------+
      *           | C | M | S | T | R | Target leverage 20bits | Reserved 7bits |
      *           +---+---+---+---+---+------------------------+----------------+
-     *             |   |   |   |   |   ` Target leverage  Fixed-point decimal with 2 decimal digits. 
+     *             |   |   |   |   |   ` Target leverage  Fixed-point decimal with 2 decimal digits.
      *             |   |   |   |   |                      0 means don't automatically deposit / withdraw.
      *             |   |   |   |   `---  Reserved
      *             |   |   |   `-------  Take profit      Only available in brokerTrade mode.
@@ -196,6 +196,7 @@ contract Perpetual is Storage, ReentrancyGuardUpgradeable, IPerpetual {
     )
         external
         override
+        limitedGasPrice
         onlyAuthorized(
             trader,
             flags.useTargetLeverage()
