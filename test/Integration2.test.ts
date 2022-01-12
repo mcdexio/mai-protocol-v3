@@ -579,4 +579,53 @@ describe("integration2 - 2 perps. special pool states", () => {
       "open interest exceeds limit"
     );
   });
+
+  it("trade with gas limit", async () => {
+    await perp.runLiquidityPool();
+    // deposit
+    await perp.connect(user1).deposit(0, user1.address, toWei("500"));
+    expect(await ctk.balanceOf(user1.address)).to.equal(toWei("9500"));
+    await perp.connect(user1).deposit(1, user1.address, toWei("100"));
+    expect(await ctk.balanceOf(user1.address)).to.equal(toWei("9400"));
+    var { cash, position, margin, isMaintenanceMarginSafe } = await perp.getMarginAccount(0, user1.address);
+    expect(cash).to.equal(toWei("500"));
+    expect(position).to.equal(toWei("0"));
+    expect(margin).to.equal(toWei("500"));
+    expect(isMaintenanceMarginSafe).to.be.true;
+    var { nums } = await perp.getPerpetualInfo(0);
+    expect(nums[0]).to.equal(toWei("500")); // total collateral of perpetual
+    expect(nums[31]).to.equal(toWei("0")); // open interest of perpetual
+    var { cash, position, margin, isMaintenanceMarginSafe } = await perp.getMarginAccount(1, user1.address);
+    expect(cash).to.equal(toWei("100"));
+    expect(position).to.equal(toWei("0"));
+    expect(margin).to.equal(toWei("100"));
+    expect(isMaintenanceMarginSafe).to.be.true;
+    var { nums } = await perp.getPerpetualInfo(1);
+    expect(nums[0]).to.equal(toWei("100")); // total collateral of perpetual
+    expect(nums[31]).to.equal(toWei("0")); // open interest of perpetual
+
+    // add liquidity
+    await perp.connect(user2).addLiquidity(toWei("1000"));
+    expect(await stk.balanceOf(user2.address)).to.equal(toWei("1000")); // first time stk amount = ctk amount
+    expect(await ctk.balanceOf(user2.address)).to.equal(toWei("9000"));
+    var { intNums } = await perp.getLiquidityPoolInfo();
+    expect(intNums[1]).to.equal(toWei("1000")); // poolCash
+    var { poolMargin } = await perp.getPoolMargin();
+    expect(poolMargin).to.equal(toWei("1000"));
+    var { nums } = await perp.getPerpetualInfo(0);
+    expect(nums[0]).to.equal(toWei("500")); // total collateral of perpetual
+    var { nums } = await perp.getPerpetualInfo(1);
+    expect(nums[0]).to.equal(toWei("100")); // total collateral of perpetual
+
+    // trade
+    let now = Math.floor(Date.now() / 1000);
+    await perp.connect(user1).trade(0, user1.address, toWei("0.1"), toWei("1150"), now + 999999, none, 0);
+
+    await expect(perp.connect(user1).setGasPriceLimit("5000000000")).to.be.revertedWith("caller must be owner of pool creator")
+    await perp.connect(user0).setGasPriceLimit("5000000000")
+
+    await expect(perp.connect(user1).trade(0, user1.address, toWei("0.1"), toWei("1150"), now + 999999, none, 0, { gasPrice: "5000000001" })).to.be.revertedWith("gas price exceeded");
+    await perp.connect(user1).trade(0, user1.address, toWei("0.1"), toWei("1150"), now + 999999, none, 0, { gasPrice: "5000000000" })
+  })
+
 });
